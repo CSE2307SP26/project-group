@@ -44,6 +44,30 @@ These features will allow users to create accounts and perform basic financial o
 
 # Is there anything that you implemented but doesn't currently work?
 
+No known issues at this time for user story **#5**.
+
 ---
 
 # What commands are needed to compile and run your code from the command line?
+
+From the project root:
+
+Windows (PowerShell):
+
+* `.\gradlew.bat clean build`
+* `.\gradlew.bat test`
+* `.\gradlew.bat run --args="help"`
+* `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
+
+macOS/Linux:
+
+* `./gradlew clean build`
+* `./gradlew test`
+* `./gradlew run --args="help"`
+* `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
+
+Implemented in this iteration:
+
+* User story **#5**: create an additional account for an existing customer
+* Includes validation (unknown customer and invalid opening deposit) and unit tests
+* Command-line support for account creation via `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`
