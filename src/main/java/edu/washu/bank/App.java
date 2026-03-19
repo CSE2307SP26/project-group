@@ -24,6 +24,11 @@ public class App {
             return;
         }
 
+        if ("check-balance".equalsIgnoreCase(args[0])) {
+            runCheckBalance(accountService, args);
+            return;
+        }
+
         System.out.println("Unknown command: " + args[0]);
         printUsage();
     }
@@ -65,6 +70,23 @@ public class App {
         }
     }
 
+    private static void runCheckBalance(AccountService accountService, String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for check-balance.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+
+        try {
+            java.math.BigDecimal balance = accountService.getBalance(accountId);
+            System.out.println("Account " + accountId + " balance: " + balance);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
     private static void printUsage() {
         System.out.println("Bank CLI");
         System.out.println("Seeded customer for demo: CUST-001");
@@ -72,5 +94,6 @@ public class App {
         System.out.println("  create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>");
         System.out.println("Example:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
+        System.out.println("  check-balance <accountId>");
     }
 }
