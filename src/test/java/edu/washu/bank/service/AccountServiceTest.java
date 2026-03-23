@@ -8,6 +8,7 @@ import edu.washu.bank.model.AccountType;
 import edu.washu.bank.model.Customer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import edu.washu.bank.exception.AccountNotFoundException;
 
 import java.math.BigDecimal;
 
@@ -76,5 +77,25 @@ class AccountServiceTest {
 
         assertEquals("ACC-0001", first.getId());
         assertEquals("ACC-0002", second.getId());
+    }
+    @Test
+    void getBalanceForExistingAccountReturnsCorrectBalance() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal("500.00")
+        );
+
+        BigDecimal balance = accountService.getBalance(account.getId());
+
+        assertEquals(new BigDecimal("500.00"), balance);
+    }
+
+    @Test
+    void getBalanceForMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.getBalance("ACC-9999")
+        );
     }
 }
