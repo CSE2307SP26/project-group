@@ -24,6 +24,11 @@ public class App {
             return;
         }
 
+        if ("transaction-history".equalsIgnoreCase(args[0])) {
+            runTransactionHistory(accountService, args);
+            return;
+        }
+
         if ("check-balance".equalsIgnoreCase(args[0])) {
             runCheckBalance(accountService, args);
             return;
@@ -87,6 +92,29 @@ public class App {
         }
     }
 
+    private static void runTransactionHistory(AccountService accountService, String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for transaction-history.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+
+        try {
+            var history = accountService.getTransactionHistory(accountId);
+            if (history.isEmpty()) {
+                System.out.println("No transactions found for account " + accountId);
+            } else {
+                history.forEach(t -> System.out.println(
+                        t.getTimestamp() + " | " + t.getType() + " | " + t.getAmount()
+                ));
+            }
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
     private static void printUsage() {
         System.out.println("Bank CLI");
         System.out.println("Seeded customer for demo: CUST-001");
@@ -95,5 +123,6 @@ public class App {
         System.out.println("Example:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
         System.out.println("  check-balance <accountId>");
+        System.out.println("  transaction-history <accountId>");
     }
 }

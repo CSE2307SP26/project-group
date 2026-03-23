@@ -9,6 +9,8 @@ import edu.washu.bank.model.Customer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import edu.washu.bank.exception.AccountNotFoundException;
+import edu.washu.bank.model.Transaction;
+import java.util.List;
 
 import java.math.BigDecimal;
 
@@ -96,6 +98,26 @@ class AccountServiceTest {
         assertThrows(
                 AccountNotFoundException.class,
                 () -> accountService.getBalance("ACC-9999")
+        );
+    }
+    @Test
+    void getTransactionHistoryForExistingAccountReturnsEmptyInitially() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal("100.00")
+        );
+
+        List<Transaction> history = accountService.getTransactionHistory(account.getId());
+
+        assertEquals(0, history.size());
+    }
+
+    @Test
+    void getTransactionHistoryForMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.getTransactionHistory("ACC-9999")
         );
     }
 }
