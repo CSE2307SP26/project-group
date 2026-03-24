@@ -31,4 +31,8 @@ public class Account {
     public BigDecimal getBalance() {
         return balance;
     }
+
+    public Account deposit(BigDecimal amount) {
+        return new Account(id, customerId, type, balance.add(amount));
+    }
 }

@@ -3,6 +3,7 @@ package edu.washu.bank.service;
 import edu.washu.bank.core.Bank;
 import edu.washu.bank.exception.AccountNotFoundException;
 import edu.washu.bank.exception.CustomerNotFoundException;
+import edu.washu.bank.exception.InvalidDepositAmountException;
 import edu.washu.bank.exception.InvalidOpeningDepositException;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
@@ -32,6 +33,21 @@ public class AccountService {
         customer.addAccountId(accountId);
         return account;
     }
+
+    public Account depositIntoExistingAccount(String accountId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidDepositAmountException("Deposit amount must be greater than 0");
+        }
+
+        Account existingAccount = bank.findAccount(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
+
+        Account updatedAccount = existingAccount.deposit(amount);
+        bank.saveAccount(updatedAccount);
+        return updatedAccount;
+    }
+
+
     public BigDecimal getBalance(String accountId) {
         Account account = bank.findAccount(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));

@@ -9,6 +9,7 @@ import edu.washu.bank.model.Customer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import edu.washu.bank.exception.AccountNotFoundException;
+import edu.washu.bank.exception.InvalidDepositAmountException;
 
 import java.math.BigDecimal;
 
@@ -96,6 +97,59 @@ class AccountServiceTest {
         assertThrows(
                 AccountNotFoundException.class,
                 () -> accountService.getBalance("ACC-9999")
+        );
+    }
+
+    @Test
+    void depositIntoExistingAccountSucceeds() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal("100.00")
+        );
+
+        Account updatedAccount = accountService.depositIntoExistingAccount(
+                account.getId(),
+                new BigDecimal("50.00")
+        );
+
+        assertEquals(new BigDecimal("150.00"), updatedAccount.getBalance());
+        assertEquals(new BigDecimal("150.00"), bank.findAccount(account.getId()).orElseThrow().getBalance());
+    }
+
+    @Test
+    void depositIntoMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.depositIntoExistingAccount("ACC-9999", new BigDecimal("50.00"))
+        );
+    }
+
+    @Test
+    void depositWithZeroAmountThrows() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                InvalidDepositAmountException.class,
+                () -> accountService.depositIntoExistingAccount(account.getId(), BigDecimal.ZERO)
+        );
+    }
+
+    @Test
+    void depositWithNegativeAmountThrows() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                InvalidDepositAmountException.class,
+                () -> accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("-10.00"))
         );
     }
 }

@@ -13,6 +13,7 @@ public class App {
         Bank bank = new Bank();
         bank.addCustomer(new Customer("CUST-001", "Demo User"));
         AccountService accountService = new AccountService(bank);
+        accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
 
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
             printUsage();
@@ -26,6 +27,11 @@ public class App {
 
         if ("check-balance".equalsIgnoreCase(args[0])) {
             runCheckBalance(accountService, args);
+            return;
+        }
+
+        if ("deposit".equalsIgnoreCase(args[0])) {
+            runDeposit(accountService, args);
             return;
         }
 
@@ -87,13 +93,46 @@ public class App {
         }
     }
 
+    private static void runDeposit(AccountService accountService, String[] args) {
+        if (args.length != 3) {
+            System.out.println("Invalid arguments for deposit.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+
+        BigDecimal amount;
+        try {
+            amount = new BigDecimal(args[2]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid deposit amount: " + args[2]);
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.depositIntoExistingAccount(accountId, amount);
+            System.out.println(
+                    "Deposited " + amount
+                            + " into account " + updatedAccount.getId()
+                            + ". New balance: " + updatedAccount.getBalance()
+            );
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
     private static void printUsage() {
         System.out.println("Bank CLI");
         System.out.println("Seeded customer for demo: CUST-001");
+        System.out.println("Seeded account for demo: ACC-0001 (CHECKING, balance 100.00)");
         System.out.println("Usage:");
         System.out.println("  create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>");
-        System.out.println("Example:");
-        System.out.println("  create-account CUST-001 CHECKING 100.00");
         System.out.println("  check-balance <accountId>");
+        System.out.println("  deposit <accountId> <amount>");
+        System.out.println("Examples:");
+        System.out.println("  create-account CUST-001 CHECKING 100.00");
+        System.out.println("  check-balance ACC-0001");
+        System.out.println("  deposit ACC-0001 50.00");
     }
 }
