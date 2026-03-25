@@ -3,29 +3,35 @@ package edu.washu.bank;
 import edu.washu.bank.core.Bank;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
-import edu.washu.bank.model.Customer;
+import edu.washu.bank.persistence.SqliteBankStore;
 import edu.washu.bank.service.AccountService;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.sql.SQLException;
 
 public class App {
     public static void main(String[] args) {
-        Bank bank = new Bank();
-        bank.addCustomer(new Customer("CUST-001", "Demo User"));
+        Path dbPath = SqliteBankStore.resolveDatabasePath();
+        SqliteBankStore store = new SqliteBankStore(dbPath);
+        Bank bank;
+        try {
+            bank = store.loadOrInitialize();
+        } catch (SQLException e) {
+            System.err.println("Database error: " + e.getMessage());
+            System.exit(1);
+            return;
+        }
+
         AccountService accountService = new AccountService(bank);
 
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
-            printUsage();
+            printUsage(dbPath);
             return;
         }
 
         if ("create-account".equalsIgnoreCase(args[0])) {
-            runCreateAccount(accountService, args);
-            return;
-        }
-
-        if ("transaction-history".equalsIgnoreCase(args[0])) {
-            runTransactionHistory(accountService, args);
+            runCreateAccount(store, bank, accountService, args);
             return;
         }
 
@@ -34,14 +40,29 @@ public class App {
             return;
         }
 
+        if ("clear-data".equalsIgnoreCase(args[0])) {
+            runClearData(store, dbPath);
+            return;
+        }
+
+        if ("transaction-history".equalsIgnoreCase(args[0])) {
+            runTransactionHistory(accountService, args);
+            return;
+        }
+
         System.out.println("Unknown command: " + args[0]);
-        printUsage();
+        printUsage(dbPath);
     }
 
-    private static void runCreateAccount(AccountService accountService, String[] args) {
+    private static void runCreateAccount(
+            SqliteBankStore store,
+            Bank bank,
+            AccountService accountService,
+            String[] args
+    ) {
         if (args.length != 4) {
             System.out.println("Invalid arguments for create-account.");
-            printUsage();
+            printUsage(SqliteBankStore.resolveDatabasePath());
             return;
         }
 
@@ -65,6 +86,7 @@ public class App {
 
         try {
             Account account = accountService.createAdditionalAccount(customerId, accountType, openingDeposit);
+            store.saveFullState(bank);
             System.out.println(
                     "Created account " + account.getId()
                             + " (" + account.getType() + ") for customer " + account.getCustomerId()
@@ -72,30 +94,42 @@ public class App {
             );
         } catch (RuntimeException ex) {
             System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
         }
     }
 
     private static void runCheckBalance(AccountService accountService, String[] args) {
         if (args.length != 2) {
             System.out.println("Invalid arguments for check-balance.");
-            printUsage();
+            printUsage(SqliteBankStore.resolveDatabasePath());
             return;
         }
 
         String accountId = args[1];
 
         try {
-            java.math.BigDecimal balance = accountService.getBalance(accountId);
+            BigDecimal balance = accountService.getBalance(accountId);
             System.out.println("Account " + accountId + " balance: " + balance);
         } catch (RuntimeException ex) {
             System.out.println(ex.getMessage());
         }
     }
 
+    private static void runClearData(SqliteBankStore store, Path dbPath) {
+        try {
+            store.clearAllAndReseed();
+            System.out.println("Cleared database and re-seeded demo customer CUST-001.");
+            System.out.println("Database file: " + dbPath.toAbsolutePath().normalize());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     private static void runTransactionHistory(AccountService accountService, String[] args) {
         if (args.length != 2) {
             System.out.println("Invalid arguments for transaction-history.");
-            printUsage();
+            printUsage(SqliteBankStore.resolveDatabasePath());
             return;
         }
 
@@ -115,14 +149,16 @@ public class App {
         }
     }
 
-    private static void printUsage() {
-        System.out.println("Bank CLI");
+    private static void printUsage(Path dbPath) {
+        System.out.println("Bank CLI (SQLite: " + dbPath.toAbsolutePath().normalize() + ")");
+        System.out.println("Override path: -Dbank.db.file=/path/to/bank.db");
         System.out.println("Seeded customer for demo: CUST-001");
         System.out.println("Usage:");
         System.out.println("  create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>");
+        System.out.println("  check-balance <accountId>");
+        System.out.println("  clear-data");
         System.out.println("Example:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
-        System.out.println("  check-balance <accountId>");
         System.out.println("  transaction-history <accountId>");
     }
 }

@@ -58,6 +58,9 @@ Windows (PowerShell):
 * `.\gradlew.bat test`
 * `.\gradlew.bat run --args="help"`
 * `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
+* `.\gradlew.bat run --args="check-balance ACC-0001"` (use the account id printed by `create-account`)
+* `.\gradlew.bat run --args="clear-data"` (wipes the local database and re-seeds the demo customer `CUST-001`)
+* `.\gradlew.bat run --args="transaction-history ACC-0001"`
 
 macOS/Linux:
 
@@ -65,9 +68,17 @@ macOS/Linux:
 * `./gradlew test`
 * `./gradlew run --args="help"`
 * `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
+* `./gradlew run --args="check-balance ACC-0001"`
+* `./gradlew run --args="clear-data"`
+* `./gradlew run --args="transaction-history ACC-0001"`
+
+**Persistence:** Account data is stored in a local SQLite file named `bank.db` in the working directory (created on first run). Separate `gradlew run` invocations share this file, so balances survive between commands. To use a different path: add `-Dbank.db.file=/absolute/path/to/bank.db` to the `gradlew` command (before `run`).
 
 Implemented in this iteration:
 
 * User story **#5**: create an additional account for an existing customer
-* Includes validation (unknown customer and invalid opening deposit) and unit tests
-* Command-line support for account creation via `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`
+* User story **#3**: check an account balance via `check-balance <accountId>`
+* Validation (unknown customer, invalid opening deposit, missing account) and unit tests
+* Command-line commands: `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`, `check-balance <accountId>`, `clear-data`, `transaction-history <accountId>`
+* SQLite-backed storage so CLI runs persist state to disk
+* User story **#4**: view transaction history for an account via `transaction-history <accountId>`
