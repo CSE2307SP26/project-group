@@ -78,6 +78,48 @@ class AccountServiceTest {
         assertEquals("ACC-0001", first.getId());
         assertEquals("ACC-0002", second.getId());
     }
+
+    @Test
+    void withdrawWithSufficientFundsSucceeds() {
+        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
+        accountService.withdraw(account.getId(), new BigDecimal("30.00"));
+        assertEquals(new BigDecimal("70.00"), account.getBalance());
+    }
+
+    @Test
+    void withdrawWithInsufficientFundsThrows() {
+        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("50.00"));
+        assertThrows(
+                RuntimeException.class,
+                () -> accountService.withdraw(account.getId(), new BigDecimal("60.00"))
+        ); 
+    }
+
+    @Test
+    void withdrawWithNegativeAmountThrows() {
+        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("50.00"));
+        assertThrows(
+                RuntimeException.class,
+                () -> accountService.withdraw(account.getId(), new BigDecimal("-10.00"))
+        );
+    }
+
+    @Test
+    void withdrawWithInvalidAmountThrows() {
+        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("50.00"));
+        assertThrows(
+                RuntimeException.class,
+                () -> accountService.withdraw(account.getId(), null)
+        );
+    }
+
+    @ Test
+    void withdrawFromNonexistentAccountThrows() {
+        assertThrows(
+                RuntimeException.class,
+                () -> accountService.withdraw("ACC-404", new BigDecimal("10.00"))        );
+    }
+
     @Test
     void getBalanceForExistingAccountReturnsCorrectBalance() {
         Account account = accountService.createAdditionalAccount(
