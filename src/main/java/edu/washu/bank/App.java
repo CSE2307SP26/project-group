@@ -46,6 +46,11 @@ public class App {
             return;
         }
 
+        if ("withdraw".equalsIgnoreCase(args[0])) {
+            runWithdraw(store, bank, accountService, args);
+            return;
+        }
+
         if ("clear-data".equalsIgnoreCase(args[0])) {
             runClearData(store, dbPath);
             return;
@@ -54,11 +59,16 @@ public class App {
         System.out.println("Unknown command: " + args[0]);
         printUsage(dbPath);
     }
-  
-  private static void runWithdraw(AccountService accountService, String[] args) {
+
+    private static void runWithdraw(
+            SqliteBankStore store,
+            Bank bank,
+            AccountService accountService,
+            String[] args
+    ) {
         if (args.length != 3) {
-            System.out.println("Invalid arguments for deposit.");
-            printUsage();
+            System.out.println("Invalid arguments for withdraw.");
+            printUsage(SqliteBankStore.resolveDatabasePath());
             return;
         }
 
@@ -68,15 +78,23 @@ public class App {
         try {
             amount = new BigDecimal(args[2]);
         } catch (NumberFormatException ex) {
-            System.out.println("Invalid deposit amount: " + args[2]);
+            System.out.println("Invalid withdraw amount: " + args[2]);
             return;
         }
 
         try {
             accountService.withdraw(accountId, amount);
+            store.saveFullState(bank);
+            BigDecimal newBalance = accountService.getBalance(accountId);
+            System.out.println(
+                    "Withdrew " + amount + " from account " + accountId + ". New balance: " + newBalance
+            );
         } catch (RuntimeException ex) {
             System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
         }
+    }
 
     private static void runCreateAccount(
             SqliteBankStore store,
@@ -196,7 +214,6 @@ public class App {
         System.out.println("  deposit <accountId> <amount>");
         System.out.println("  withdraw <accountId> <amount>");
         System.out.println("  check-balance <accountId>");
-        System.out.println("  deposit <accountId> <amount>");
         System.out.println("  clear-data");
         System.out.println("Examples:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");

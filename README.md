@@ -58,6 +58,8 @@ Windows (PowerShell):
 * `.\gradlew.bat test`
 * `.\gradlew.bat run --args="help"`
 * `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
+* `.\gradlew.bat run --args="deposit ACC-0001 50.00"` (use the account id printed by `create-account`)
+* `.\gradlew.bat run --args="withdraw ACC-0001 25.00"` (use the account id printed by `create-account`)
 * `.\gradlew.bat run --args="check-balance ACC-0001"` (use the account id printed by `create-account`)
 * `.\gradlew.bat run --args="clear-data"` (wipes the local database and re-seeds the demo customer `CUST-001`)
 
@@ -67,6 +69,8 @@ macOS/Linux:
 * `./gradlew test`
 * `./gradlew run --args="help"`
 * `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
+* `./gradlew run --args="deposit ACC-0001 50.00"`
+* `./gradlew run --args="withdraw ACC-0001 25.00"`
 * `./gradlew run --args="check-balance ACC-0001"`
 * `./gradlew run --args="clear-data"`
 
@@ -77,7 +81,7 @@ Implemented in this iteration:
 * User story **#5**: create an additional account for an existing customer
 * User story **#3**: check an account balance via `check-balance <accountId>`
 * Validation (unknown customer, invalid opening deposit, missing account) and unit tests
-* Command-line commands: `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`, `check-balance <accountId>`, `clear-data`
+* Command-line commands: `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`, `deposit <accountId> <amount>`, `withdraw <accountId> <amount>`, `check-balance <accountId>`, `clear-data`
 * SQLite-backed storage so CLI runs persist state to disk
 
 ---
@@ -105,6 +109,7 @@ macOS/Linux:
 * `./gradlew run --args="clear-data"`
 * `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
 * `./gradlew run --args="deposit ACC-0001 50.00"`
+* `./gradlew run --args="withdraw ACC-0001 25.00"`
 * `./gradlew run --args="check-balance ACC-0001"`
 
 
@@ -115,4 +120,5 @@ Windows (PowerShell):
 * `.\gradlew.bat run --args="clear-data"`
 * `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
 * `.\gradlew.bat run --args="deposit ACC-0001 50.00"`
+* `.\gradlew.bat run --args="withdraw ACC-0001 25.00"`
 * `.\gradlew.bat run --args="check-balance ACC-0001"`
