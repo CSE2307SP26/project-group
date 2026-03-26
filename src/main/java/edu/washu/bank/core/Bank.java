@@ -3,7 +3,9 @@ package edu.washu.bank.core;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.Customer;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,5 +34,24 @@ public class Bank {
         String newId = String.format("ACC-%04d", accountSequence);
         accountSequence += 1;
         return newId;
+    }
+
+    /**
+     * Next account id uses this counter; persisted so separate CLI runs stay consistent.
+     */
+    public int getAccountSequence() {
+        return accountSequence;
+    }
+
+    public void setAccountSequence(int accountSequence) {
+        this.accountSequence = accountSequence;
+    }
+
+    public List<Customer> getCustomersSnapshot() {
+        return new ArrayList<>(customers.values());
+    }
+
+    public List<Account> getAccountsSnapshot() {
+        return new ArrayList<>(accounts.values());
     }
 }

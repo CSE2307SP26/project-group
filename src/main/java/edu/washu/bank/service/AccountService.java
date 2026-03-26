@@ -1,6 +1,7 @@
 package edu.washu.bank.service;
 
 import edu.washu.bank.core.Bank;
+import edu.washu.bank.exception.AccountNotFoundException;
 import edu.washu.bank.exception.CustomerNotFoundException;
 import edu.washu.bank.exception.InvalidOpeningDepositException;
 import edu.washu.bank.exception.InvalidTransferException;
@@ -34,12 +35,6 @@ public class AccountService {
         return account;
     }
 
-    // public void deposit(String accountId, BigDecimal amount) {
-    //     Account account = bank.findAccount(accountId)
-    //             .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountId));
-    //     account.deposit(amount);
-    // }
-
     public void withdraw(String accountId, BigDecimal amount) {
         Account account = bank.findAccount(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
@@ -59,4 +54,9 @@ public class AccountService {
         }
     }
 
+    public BigDecimal getBalance(String accountId) {
+        Account account = bank.findAccount(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
+        return account.getBalance();
+    }
 }
