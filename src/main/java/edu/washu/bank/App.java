@@ -54,6 +54,29 @@ public class App {
         System.out.println("Unknown command: " + args[0]);
         printUsage(dbPath);
     }
+  
+  private static void runWithdraw(AccountService accountService, String[] args) {
+        if (args.length != 3) {
+            System.out.println("Invalid arguments for deposit.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+
+        BigDecimal amount;
+        try {
+            amount = new BigDecimal(args[2]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid deposit amount: " + args[2]);
+            return;
+        }
+
+        try {
+            accountService.withdraw(accountId, amount);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
 
     private static void runCreateAccount(
             SqliteBankStore store,
@@ -170,6 +193,8 @@ public class App {
         System.out.println("Seeded customer for demo: CUST-001");
         System.out.println("Usage:");
         System.out.println("  create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>");
+        System.out.println("  deposit <accountId> <amount>");
+        System.out.println("  withdraw <accountId> <amount>");
         System.out.println("  check-balance <accountId>");
         System.out.println("  deposit <accountId> <amount>");
         System.out.println("  clear-data");
@@ -177,5 +202,6 @@ public class App {
         System.out.println("  create-account CUST-001 CHECKING 100.00");
         System.out.println("  check-balance ACC-0001");
         System.out.println("  deposit ACC-0001 50.00");
+        System.out.println("  withdraw ACC-001 25.00");
     }
 }

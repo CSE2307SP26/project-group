@@ -23,3 +23,7 @@ test {
 application {
     mainClass = 'edu.washu.bank.App'
 }
+
+tasks.named("run") {
+    standardInput = System.in
+}
