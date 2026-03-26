@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
+
 public class App {
     public static void main(String[] args) {
         Path dbPath = SqliteBankStore.resolveDatabasePath();
@@ -37,6 +38,11 @@ public class App {
 
         if ("check-balance".equalsIgnoreCase(args[0])) {
             runCheckBalance(accountService, args);
+            return;
+        }
+
+        if ("deposit".equalsIgnoreCase(args[0])) {
+            runDeposit(store, bank, accountService, args);
             return;
         }
 
@@ -134,6 +140,43 @@ public class App {
         }
     }
 
+    private static void runDeposit(
+            SqliteBankStore store,
+            Bank bank,
+            AccountService accountService,
+            String[] args
+    ) {
+        if (args.length != 3) {
+            System.out.println("Invalid arguments for deposit.");
+            printUsage(SqliteBankStore.resolveDatabasePath());
+            return;
+        }
+
+        String accountId = args[1];
+
+        BigDecimal amount;
+        try {
+            amount = new BigDecimal(args[2]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid deposit amount: " + args[2]);
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.depositIntoExistingAccount(accountId, amount);
+            store.saveFullState(bank);
+            System.out.println(
+                    "Deposited " + amount
+                            + " into account " + updatedAccount.getId()
+                            + ". New balance: " + updatedAccount.getBalance()
+            );
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     private static void runClearData(SqliteBankStore store, Path dbPath) {
         try {
             store.clearAllAndReseed();
@@ -153,9 +196,12 @@ public class App {
         System.out.println("  deposit <accountId> <amount>");
         System.out.println("  withdraw <accountId> <amount>");
         System.out.println("  check-balance <accountId>");
+        System.out.println("  deposit <accountId> <amount>");
         System.out.println("  clear-data");
-        System.out.println("Example:");
+        System.out.println("Examples:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
+        System.out.println("  check-balance ACC-0001");
+        System.out.println("  deposit ACC-0001 50.00");
         System.out.println("  withdraw ACC-001 25.00");
     }
 }

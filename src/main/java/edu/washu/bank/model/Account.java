@@ -33,13 +33,10 @@ public class Account {
         return balance;
     }
 
-    // public void deposit(BigDecimal amount) {
-    //     if (!isDepositValid(amount)) {
-    //         throw new InvalidTransferException("Deposit amount must be greater than zero.");
-    //     }
-    //     balance = balance.add(amount);
-    // }
-
+    public Account deposit(BigDecimal amount) {
+        return new Account(id, customerId, type, balance.add(amount));
+    }
+  
     public void withdraw(BigDecimal amount) {
         if (!isWithdrawalValid(amount)) {
             throw new InvalidTransferException(
@@ -48,10 +45,6 @@ public class Account {
         }
         balance = balance.subtract(amount);
     }
-
-    // private boolean isDepositValid(BigDecimal amount) {
-    //     return amount.compareTo(BigDecimal.ZERO) > 0;
-    // }
 
     private boolean isWithdrawalValid(BigDecimal amount) {
         return amount.compareTo(BigDecimal.ZERO) > 0 && balance.compareTo(amount) >= 0;

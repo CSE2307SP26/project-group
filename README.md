@@ -79,3 +79,40 @@ Implemented in this iteration:
 * Validation (unknown customer, invalid opening deposit, missing account) and unit tests
 * Command-line commands: `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`, `check-balance <accountId>`, `clear-data`
 * SQLite-backed storage so CLI runs persist state to disk
+
+---
+
+## Additional update for Iteration 1 (Deposit feature)
+
+Implemented by Nina:
+
+* Added support for **user story #1**: deposit into an existing account
+* Added validation so deposits fail if:
+    * the account does not exist
+    * the deposit amount is `0` or negative
+* Added unit tests for deposit behavior
+* Added command-line support for:
+    * `deposit <accountId> <amount>`
+* Updated the CLI so account data persists in SQLite across separate runs
+* Current note: a valid account must already exist before using the deposit command
+
+Example deposit command:
+
+macOS/Linux:
+* `./gradlew clean build`
+* `./gradlew test`
+* `./gradlew run --args="help"`
+* `./gradlew run --args="clear-data"`
+* `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
+* `./gradlew run --args="deposit ACC-0001 50.00"`
+* `./gradlew run --args="check-balance ACC-0001"`
+
+
+Windows (PowerShell):
+* `.\gradlew.bat clean build`
+* `.\gradlew.bat test`
+* `.\gradlew.bat run --args="help"`
+* `.\gradlew.bat run --args="clear-data"`
+* `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
+* `.\gradlew.bat run --args="deposit ACC-0001 50.00"`
+* `.\gradlew.bat run --args="check-balance ACC-0001"`
