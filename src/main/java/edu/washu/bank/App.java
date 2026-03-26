@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
+
 public class App {
     public static void main(String[] args) {
         Path dbPath = SqliteBankStore.resolveDatabasePath();
@@ -41,7 +42,7 @@ public class App {
         }
 
         if ("deposit".equalsIgnoreCase(args[0])) {
-            runDeposit(accountService, args);
+            runDeposit(store, bank, accountService, args);
             return;
         }
 
@@ -116,7 +117,12 @@ public class App {
         }
     }
 
-    private static void runDeposit(AccountService accountService, String[] args) {
+    private static void runDeposit(
+            SqliteBankStore store,
+            Bank bank,
+            AccountService accountService,
+            String[] args
+    ) {
         if (args.length != 3) {
             System.out.println("Invalid arguments for deposit.");
             printUsage(SqliteBankStore.resolveDatabasePath());
@@ -135,6 +141,7 @@ public class App {
 
         try {
             Account updatedAccount = accountService.depositIntoExistingAccount(accountId, amount);
+            store.saveFullState(bank);
             System.out.println(
                     "Deposited " + amount
                             + " into account " + updatedAccount.getId()
@@ -142,6 +149,8 @@ public class App {
             );
         } catch (RuntimeException ex) {
             System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
         }
     }
 
