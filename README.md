@@ -9,6 +9,17 @@
 
 ---
 
+# Features planned to implement this iteration (iteration 2)
+
+* **#8** Close an existing account
+* **#9** Customer can transfer money from one account to another
+* **#10** Bank admin can collect fees from existing account
+* **#11** Bank admin can add interest to existing account
+* **#17** Admin login
+* **#18** Overdraft protection
+* **#19** Files to store user story info
+* **#20** Password protection
+
 # User Stories
 
 1. A bank customer should be able to deposit into an existing account. (Shook)
