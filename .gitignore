@@ -12,6 +12,7 @@
 
 # Package Files #
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear
@@ -23,7 +24,18 @@
 hs_err_pid*
 replay_pid*
 
-.DS_Store
+# Gradle
+.gradle/
 /build/
-/.vscode/
-/.gradle/
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
+build/
+
+# Local SQLite database (CLI default: bank.db)
+bank.db

@@ -23,10 +23,10 @@
 # User Stories
 
 1. A bank customer should be able to deposit into an existing account. (Shook)
-2. A bank customer should be able to withdraw from an account.
-3. A bank customer should be able to check their account balance.
+2. A bank customer should be able to withdraw from an account. (Rosie)
+3. A bank customer should be able to check their account balance. 
 4. A bank customer should be able to view their transaction history for an account.
-5. A bank customer should be able to create an additional account with the bank.
+5. A bank customer should be able to create an additional account with the bank. 
 6. A bank customer should be able to close an existing account.
 7. A bank customer should be able to transfer money from one account to another.
 8. A bank administrator should be able to collect fees from existing accounts when necessary.
@@ -69,6 +69,10 @@ Windows (PowerShell):
 * `.\gradlew.bat test`
 * `.\gradlew.bat run --args="help"`
 * `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
+* `.\gradlew.bat run --args="deposit ACC-0001 50.00"` (use the account id printed by `create-account`)
+* `.\gradlew.bat run --args="withdraw ACC-0001 25.00"` (use the account id printed by `create-account`)
+* `.\gradlew.bat run --args="check-balance ACC-0001"` (use the account id printed by `create-account`)
+* `.\gradlew.bat run --args="clear-data"` (wipes the local database and re-seeds the demo customer `CUST-001`)
 
 macOS/Linux:
 
@@ -76,9 +80,56 @@ macOS/Linux:
 * `./gradlew test`
 * `./gradlew run --args="help"`
 * `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
+* `./gradlew run --args="deposit ACC-0001 50.00"`
+* `./gradlew run --args="withdraw ACC-0001 25.00"`
+* `./gradlew run --args="check-balance ACC-0001"`
+* `./gradlew run --args="clear-data"`
+
+**Persistence:** Account data is stored in a local SQLite file named `bank.db` in the working directory (created on first run). Separate `gradlew run` invocations share this file, so balances survive between commands. To use a different path: add `-Dbank.db.file=/absolute/path/to/bank.db` to the `gradlew` command (before `run`).
 
 Implemented in this iteration:
 
 * User story **#5**: create an additional account for an existing customer
-* Includes validation (unknown customer and invalid opening deposit) and unit tests
-* Command-line support for account creation via `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`
+* User story **#3**: check an account balance via `check-balance <accountId>`
+* Validation (unknown customer, invalid opening deposit, missing account) and unit tests
+* Command-line commands: `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`, `deposit <accountId> <amount>`, `withdraw <accountId> <amount>`, `check-balance <accountId>`, `clear-data`
+* SQLite-backed storage so CLI runs persist state to disk
+
+---
+
+## Additional update for Iteration 1 (Deposit feature)
+
+Implemented by Nina:
+
+* Added support for **user story #1**: deposit into an existing account
+* Added validation so deposits fail if:
+    * the account does not exist
+    * the deposit amount is `0` or negative
+* Added unit tests for deposit behavior
+* Added command-line support for:
+    * `deposit <accountId> <amount>`
+* Updated the CLI so account data persists in SQLite across separate runs
+* Current note: a valid account must already exist before using the deposit command
+
+Example deposit command:
+
+macOS/Linux:
+* `./gradlew clean build`
+* `./gradlew test`
+* `./gradlew run --args="help"`
+* `./gradlew run --args="clear-data"`
+* `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
+* `./gradlew run --args="deposit ACC-0001 50.00"`
+* `./gradlew run --args="withdraw ACC-0001 25.00"`
+* `./gradlew run --args="check-balance ACC-0001"`
+
+
+Windows (PowerShell):
+* `.\gradlew.bat clean build`
+* `.\gradlew.bat test`
+* `.\gradlew.bat run --args="help"`
+* `.\gradlew.bat run --args="clear-data"`
+* `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
+* `.\gradlew.bat run --args="deposit ACC-0001 50.00"`
+* `.\gradlew.bat run --args="withdraw ACC-0001 25.00"`
+* `.\gradlew.bat run --args="check-balance ACC-0001"`
