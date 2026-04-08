@@ -11,8 +11,8 @@
 
 # Features planned to implement this iteration (iteration 2)
 
-11. A bank administrator should be able to freeze and unfreeze an account to block deposits and withdrawals. (Daniel)
-12. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
+10. A bank administrator should be able to freeze and unfreeze an account to block deposits and withdrawals. (Daniel)
+11. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
 ---
 
 # What commands are needed to compile and run your code from the command line?
