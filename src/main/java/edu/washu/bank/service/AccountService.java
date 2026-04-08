@@ -14,7 +14,6 @@ import edu.washu.bank.model.Transaction;
 import edu.washu.bank.model.TransactionType;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 
@@ -178,38 +177,14 @@ public class AccountService {
         return updatedAccount;
     }
 
-    public Account applyInterestByRate(String username, String password, String accountId) {
-        authenticateAdmin(username, password);
-
+    public BigDecimal getInterestRate(String accountId) {
         Account account = requireAccount(accountId);
 
         if (account.getType() != AccountType.SAVINGS) {
-            throw new IllegalArgumentException("Interest can only be applied to savings accounts.");
+            throw new IllegalArgumentException("Interest rates are only available for savings accounts.");
         }
 
-        if (account.getInterestRate().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Interest rate must be greater than 0 to apply interest.");
-        }
-
-        BigDecimal interestAmount = account.getBalance()
-                .multiply(account.getInterestRate())
-                .setScale(2, RoundingMode.HALF_UP);
-
-        if (interestAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Interest payment must be greater than 0.");
-        }
-
-        Account updatedAccount = account.deposit(interestAmount);
-        bank.saveAccount(updatedAccount);
-        recordTransaction(
-                accountId,
-                TransactionType.INTEREST,
-                interestAmount,
-                updatedAccount.getBalance(),
-                null,
-                "Interest payment at rate " + account.getInterestRate()
-        );
-        return updatedAccount;
+        return account.getInterestRate();
     }
 
     private void authenticateAdmin(String username, String password) {

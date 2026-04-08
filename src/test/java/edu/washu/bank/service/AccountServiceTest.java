@@ -364,9 +364,8 @@ class AccountServiceTest {
                 )
         );
     }
-
     @Test
-    void applyInterestByRateForSavingsAccountSucceeds() {
+    void getInterestRateForSavingsAccountSucceeds() {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
@@ -380,78 +379,26 @@ class AccountServiceTest {
                 new BigDecimal("0.05")
         );
 
-        Account updatedAccount = accountService.applyInterestByRate(
-                "admin",
-                "admin123",
-                account.getId()
-        );
+        BigDecimal interestRate = accountService.getInterestRate(account.getId());
 
-        assertEquals(new BigDecimal("105.00"), updatedAccount.getBalance());
-        assertEquals(new BigDecimal("0.05"), updatedAccount.getInterestRate());
-        assertEquals(
-                TransactionType.INTEREST,
-                lastTransaction(account.getId()).getType()
-        );
-        assertEquals(
-                new BigDecimal("105.00"),
-                bank.findAccount(account.getId()).orElseThrow().getBalance()
-        );
+        assertEquals(new BigDecimal("0.05"), interestRate);
     }
 
     @Test
-    void applyInterestByRateWithInvalidAdminCredentialsThrows() {
-        Account account = accountService.createAdditionalAccount(
-                "CUST-001",
-                AccountType.SAVINGS,
-                new BigDecimal("100.00")
-        );
-
-        accountService.setInterestRate(
-                "admin",
-                "admin123",
-                account.getId(),
-                new BigDecimal("0.05")
-        );
-
-        assertThrows(
-                AuthenticationException.class,
-                () -> accountService.applyInterestByRate(
-                        "admin",
-                        "wrong-password",
-                        account.getId()
-                )
-        );
-    }
-
-    @Test
-    void applyInterestByRateForCheckingAccountThrows() {
+    void getInterestRateForCheckingAccountThrows() {
         Account account = createCheckingAccount("100.00");
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> accountService.applyInterestByRate(
-                        "admin",
-                        "admin123",
-                        account.getId()
-                )
+                () -> accountService.getInterestRate(account.getId())
         );
     }
 
     @Test
-    void applyInterestByRateWithoutPositiveRateThrows() {
-        Account account = accountService.createAdditionalAccount(
-                "CUST-001",
-                AccountType.SAVINGS,
-                new BigDecimal("100.00")
-        );
-
+    void getInterestRateForMissingAccountThrows() {
         assertThrows(
-                IllegalArgumentException.class,
-                () -> accountService.applyInterestByRate(
-                        "admin",
-                        "admin123",
-                        account.getId()
-                )
+                AccountNotFoundException.class,
+                () -> accountService.getInterestRate("ACC-404")
         );
     }
 

@@ -147,7 +147,7 @@ class SqliteBankStoreTest {
     }
 
     @Test
-    void saveAndReloadPersistsAppliedInterestByRate(@TempDir Path tempDir) throws SQLException {
+    void saveAndReloadPersistsSavingsAccountInterestRateForViewing(@TempDir Path tempDir) throws SQLException {
         Path db = tempDir.resolve("bank.db");
         SqliteBankStore store = new SqliteBankStore(db);
         Bank bank = store.loadOrInitialize();
@@ -165,17 +165,11 @@ class SqliteBankStoreTest {
                 account.getId(),
                 new BigDecimal("0.05")
         );
-        accountService.applyInterestByRate(
-                SqliteBankStore.SEEDED_ADMIN_USERNAME,
-                SqliteBankStore.SEEDED_ADMIN_PASSWORD,
-                account.getId()
-        );
         store.saveFullState(bank);
 
         Bank reloaded = new SqliteBankStore(db).loadOrInitialize();
-        Account reloadedAccount = reloaded.findAccount(account.getId()).orElseThrow();
+        AccountService reloadedService = new AccountService(reloaded);
 
-        assertEquals(new BigDecimal("105.00"), reloadedAccount.getBalance());
-        assertEquals(new BigDecimal("0.05"), reloadedAccount.getInterestRate());
+        assertEquals(new BigDecimal("0.05"), reloadedService.getInterestRate(account.getId()));
     }
 }
