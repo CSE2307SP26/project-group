@@ -26,6 +26,7 @@ Run the app with the required script:
 * `./runApp.sh deposit ACC-0001 50.00` (use the account id printed by `create-account`)
 * `./runApp.sh withdraw ACC-0001 25.00` (use the account id printed by `create-account`)
 * `./runApp.sh check-balance ACC-0001` (use the account id printed by `create-account`)
+* `./runApp.sh total-balance CUST-001`
 * `./runApp.sh transaction-history ACC-0001`
 * `./runApp.sh transfer ACC-0001 ACC-0002 10.00`
 * `./runApp.sh close-account ACC-0001`
@@ -58,7 +59,8 @@ Implemented features:
 * User story **#7**: transfer money from one account to another
 * User story **#8**: bank administrator can collect fees from existing accounts
 * User story **#9**: bank administrator can add an interest payment to an existing account
-* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `clear-data`
+* User story **#11**: customer can view the total balance across all of their accounts
+* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `total-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `clear-data`
 * SQLite-backed storage persists customers, accounts, transaction history, and admin credentials between CLI runs
 
 ---
