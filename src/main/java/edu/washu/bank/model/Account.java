@@ -11,12 +11,22 @@ public class Account {
     private final String customerId;
     private final AccountType type;
     private final BigDecimal balance;
+    private final BigDecimal interestRate;
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance) {
+        this(id, customerId, type, balance, BigDecimal.ZERO);
+    }
+
+    public Account(String id, String customerId, AccountType type, BigDecimal balance, BigDecimal interestRate) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.customerId = Objects.requireNonNull(customerId, "customerId must not be null");
         this.type = Objects.requireNonNull(type, "type must not be null");
         this.balance = Objects.requireNonNull(balance, "balance must not be null");
+        this.interestRate = Objects.requireNonNull(interestRate, "interestRate must not be null");
+
+        if (interestRate.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Interest rate must not be negative.");
+        }
     }
 
     public String getId() {
@@ -35,6 +45,10 @@ public class Account {
         return balance;
     }
 
+    public BigDecimal getInterestRate() {
+        return interestRate;
+    }
+
     public Account deposit(BigDecimal amount) {
         validateDepositAmount(amount);
         return applyDelta(amount);
@@ -45,8 +59,18 @@ public class Account {
         return applyDelta(amount.negate());
     }
 
+    public Account withInterestRate(BigDecimal newInterestRate) {
+        if (type != AccountType.SAVINGS) {
+            throw new IllegalArgumentException("Interest rates can only be set for savings accounts.");
+        }
+        if (newInterestRate == null || newInterestRate.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Interest rate must be 0 or greater.");
+        }
+        return new Account(id, customerId, type, balance, newInterestRate);
+    }
+
     private Account applyDelta(BigDecimal amountDelta) {
-        return new Account(id, customerId, type, balance.add(amountDelta));
+        return new Account(id, customerId, type, balance.add(amountDelta), interestRate);
     }
 
     private void validateDepositAmount(BigDecimal amount) {

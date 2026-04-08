@@ -59,8 +59,14 @@ public class BankCli {
             case "add-interest":
                 runAddInterest(args);
                 return;
+            case "apply-interest":
+                runApplyInterest(args);
+                return;
             case "clear-data":
                 runClearData();
+                return;
+            case "set-interest-rate":
+                runSetInterestRate(args);
                 return;
             default:
                 System.out.println("Unknown command: " + args[0]);
@@ -325,6 +331,57 @@ public class BankCli {
         }
     }
 
+    private void runApplyInterest(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for apply-interest.");
+            printUsage();
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.applyInterestByRate(args[1], args[2], args[3]);
+            store.saveFullState(bank);
+            System.out.println(
+                    "Applied interest to account " + updatedAccount.getId()
+                            + ". New balance: " + updatedAccount.getBalance()
+                            + ", rate: " + updatedAccount.getInterestRate()
+            );
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void runSetInterestRate(String[] args) {
+        if (args.length != 5) {
+            System.out.println("Invalid arguments for set-interest-rate.");
+            printUsage();
+            return;
+        }
+
+        BigDecimal interestRate;
+        try {
+            interestRate = new BigDecimal(args[4]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid interest rate: " + args[4]);
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.setInterestRate(args[1], args[2], args[3], interestRate);
+            store.saveFullState(bank);
+            System.out.println(
+                    "Set interest rate for account " + updatedAccount.getId()
+                            + " to " + updatedAccount.getInterestRate()
+            );
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     private void runClearData() {
         try {
             store.clearAllAndReseed();
@@ -356,6 +413,8 @@ public class BankCli {
         System.out.println("  add-interest <adminUsername> <adminPassword> <accountId> <amount>");
         System.out.println("  check-balance <accountId>");
         System.out.println("  clear-data");
+        System.out.println("  set-interest-rate <adminUsername> <adminPassword> <accountId> <rate>");
+        System.out.println("  apply-interest <adminUsername> <adminPassword> <accountId>");
         System.out.println("Examples:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
         System.out.println("  check-balance ACC-0001");
@@ -365,5 +424,7 @@ public class BankCli {
         System.out.println("  transfer ACC-0001 ACC-0002 10.00");
         System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
         System.out.println("  add-interest admin admin123 ACC-0001 3.00");
+        System.out.println("  set-interest-rate admin admin123 ACC-0001 0.05");
+        System.out.println("  apply-interest admin admin123 ACC-0001");
     }
 }
