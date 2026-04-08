@@ -78,36 +78,17 @@ Implemented features:
 
 ---
 
-# User Stories
+# What user stories do you intend to complete next iteration? (Iteration 1)
 
 1. A bank customer should be able to deposit into an existing account. (Nina)
 2. A bank customer should be able to withdraw from an account. (Rosie)
 3. A bank customer should be able to check their account balance. (Bobby)
-4. A bank customer should be able to view their transaction history for an account.
+4. A bank customer should be able to view their transaction history for an account. (Bobby)
 5. A bank customer should be able to create an additional account with the bank. (Daniel)
-6. A bank customer should be able to close an existing account.
-7. A bank customer should be able to transfer money from one account to another.
-8. A bank administrator should be able to collect fees from existing accounts when necessary.
-9. A bank administrator should be able to add an interest payment to an existing account when necessary.
-
----
-
-# What user stories do you intend to complete next iteration? (Iteration 1)
-
-During **Iteration 1**, we will focus on implementing the core banking functionality that allows basic account operations.
-
-Planned user stories:
-
-* **#5** Create an additional account
-* **#1** Deposit into an existing account
-* **#2** Withdraw from an account
-* **#3** Check account balance
-
-Stretch goal (if time permits):
-
-* **#4** View transaction history
-
-These features will allow users to create accounts and perform basic financial operations.
+6. A bank customer should be able to close an existing account. (Daniel)
+7. A bank customer should be able to transfer money from one account to another. (Nina)
+8. A bank administrator should be able to collect fees from existing accounts when necessary. (Rosie)
+9. A bank administrator should be able to add an interest payment to an existing account when necessary. (Daniel)
 
 ---
 
@@ -115,41 +96,3 @@ These features will allow users to create accounts and perform basic financial o
 
 No known issues at this time for user story **#5**.
 
----
-
-## Additional update for Iteration 1 (Deposit feature)
-
-Implemented by Nina:
-
-* Added support for **user story #1**: deposit into an existing account
-* Added validation so deposits fail if:
-    * the account does not exist
-    * the deposit amount is `0` or negative
-* Added unit tests for deposit behavior
-* Added command-line support for:
-    * `deposit <accountId> <amount>`
-* Updated the CLI so account data persists in SQLite across separate runs
-* Current note: a valid account must already exist before using the deposit command
-
-Example deposit command:
-
-macOS/Linux:
-* `./gradlew clean build`
-* `./gradlew test`
-* `./gradlew run --args="help"`
-* `./gradlew run --args="clear-data"`
-* `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
-* `./gradlew run --args="deposit ACC-0001 50.00"`
-* `./gradlew run --args="withdraw ACC-0001 25.00"`
-* `./gradlew run --args="check-balance ACC-0001"`
-
-
-Windows (PowerShell):
-* `.\gradlew.bat clean build`
-* `.\gradlew.bat test`
-* `.\gradlew.bat run --args="help"`
-* `.\gradlew.bat run --args="clear-data"`
-* `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
-* `.\gradlew.bat run --args="deposit ACC-0001 50.00"`
-* `.\gradlew.bat run --args="withdraw ACC-0001 25.00"`
-* `.\gradlew.bat run --args="check-balance ACC-0001"`
