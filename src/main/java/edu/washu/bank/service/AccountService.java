@@ -198,4 +198,14 @@ public class AccountService {
                 description
         ));
     }
+
+    public List<Account> listAccounts(String customerId) {
+        Customer customer = bank.findCustomer(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException(customerId));
+        return customer.getAccountIds().stream()
+                .map(id -> bank.findAccount(id))
+                .filter(opt -> opt.isPresent())
+                .map(opt -> opt.get())
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

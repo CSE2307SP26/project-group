@@ -62,6 +62,9 @@ public class BankCli {
             case "clear-data":
                 runClearData();
                 return;
+            case "list-accounts":
+                runListAccounts(args);
+                return;
             default:
                 System.out.println("Unknown command: " + args[0]);
                 printUsage();
@@ -325,6 +328,33 @@ public class BankCli {
         }
     }
 
+    private void runListAccounts(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for list-accounts.");
+            printUsage();
+            return;
+        }
+
+        String customerId = args[1];
+        try {
+            List<Account> accounts = accountService.listAccounts(customerId);
+            if (accounts.isEmpty()) {
+                System.out.println("No accounts found for customer " + customerId);
+                return;
+            }
+            System.out.println("Accounts for customer " + customerId + ":");
+            for (Account account : accounts) {
+                System.out.println(
+                        "  " + account.getId()
+                                + " | " + account.getType()
+                                + " | balance: " + account.getBalance()
+                );
+            }
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
     private void runClearData() {
         try {
             store.clearAllAndReseed();
@@ -365,5 +395,6 @@ public class BankCli {
         System.out.println("  transfer ACC-0001 ACC-0002 10.00");
         System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
         System.out.println("  add-interest admin admin123 ACC-0001 3.00");
+        System.out.println("  list-accounts <customerId>");
     }
 }

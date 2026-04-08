@@ -290,6 +290,24 @@ class AccountServiceTest {
         assertEquals(TransactionType.INTEREST, lastTransaction(account.getId()).getType());
     }
 
+    @Test
+    void listAccountsForExistingCustomerReturnsAllAccounts() {
+        accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
+        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("50.00"));
+
+        List<Account> accounts = accountService.listAccounts("CUST-001");
+
+        assertEquals(2, accounts.size());
+    }
+
+    @Test
+    void listAccountsForMissingCustomerThrows() {
+        assertThrows(
+                CustomerNotFoundException.class,
+                () -> accountService.listAccounts("CUST-404")
+        );
+    }
+
     private Account createCheckingAccount(String openingBalance) {
         return accountService.createAdditionalAccount(
                 "CUST-001",
