@@ -1,17 +1,23 @@
 package edu.washu.bank.service;
 
 import edu.washu.bank.core.Bank;
+import edu.washu.bank.exception.AccountNotFoundException;
+import edu.washu.bank.exception.AuthenticationException;
 import edu.washu.bank.exception.CustomerNotFoundException;
+import edu.washu.bank.exception.InvalidDepositAmountException;
 import edu.washu.bank.exception.InvalidOpeningDepositException;
+import edu.washu.bank.exception.InvalidTransferException;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
+import edu.washu.bank.model.AdminUser;
 import edu.washu.bank.model.Customer;
+import edu.washu.bank.model.Transaction;
+import edu.washu.bank.model.TransactionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import edu.washu.bank.exception.AccountNotFoundException;
-import edu.washu.bank.exception.InvalidDepositAmountException;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -25,6 +31,7 @@ class AccountServiceTest {
     void setUp() {
         bank = new Bank();
         bank.addCustomer(new Customer("CUST-001", "Alice"));
+        bank.addAdmin(new AdminUser("admin", "admin123"));
         accountService = new AccountService(bank);
     }
 
@@ -43,7 +50,7 @@ class AccountServiceTest {
     }
 
     @Test
-    void createAdditionalAccountAddsAccountToCustomer() {
+    void createAdditionalAccountAddsAccountToCustomerAndHistory() {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
@@ -51,8 +58,12 @@ class AccountServiceTest {
         );
 
         Customer customer = bank.findCustomer("CUST-001").orElseThrow();
+        List<Transaction> history = accountService.getTransactionHistory(account.getId());
+
         assertEquals(1, customer.getAccountIds().size());
         assertEquals(account.getId(), customer.getAccountIds().get(0));
+        assertEquals(1, history.size());
+        assertEquals(TransactionType.ACCOUNT_OPENED, history.get(0).getType());
     }
 
     @Test
@@ -82,52 +93,55 @@ class AccountServiceTest {
 
     @Test
     void withdrawWithSufficientFundsSucceeds() {
-        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
-        accountService.withdraw(account.getId(), new BigDecimal("30.00"));
-        assertEquals(new BigDecimal("70.00"), account.getBalance());
+        Account account = createCheckingAccount("100.00");
+
+        Account updatedAccount = accountService.withdraw(account.getId(), new BigDecimal("30.00"));
+
+        assertEquals(new BigDecimal("70.00"), updatedAccount.getBalance());
+        assertEquals(new BigDecimal("70.00"), bank.findAccount(account.getId()).orElseThrow().getBalance());
     }
 
     @Test
     void withdrawWithInsufficientFundsThrows() {
-        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("50.00"));
+        Account account = createCheckingAccount("50.00");
+
         assertThrows(
-                RuntimeException.class,
+                InvalidTransferException.class,
                 () -> accountService.withdraw(account.getId(), new BigDecimal("60.00"))
-        ); 
+        );
     }
 
     @Test
     void withdrawWithNegativeAmountThrows() {
-        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("50.00"));
+        Account account = createCheckingAccount("50.00");
+
         assertThrows(
-                RuntimeException.class,
+                InvalidTransferException.class,
                 () -> accountService.withdraw(account.getId(), new BigDecimal("-10.00"))
         );
     }
 
     @Test
     void withdrawWithInvalidAmountThrows() {
-        Account account = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("50.00"));
+        Account account = createCheckingAccount("50.00");
+
         assertThrows(
-                RuntimeException.class,
+                InvalidTransferException.class,
                 () -> accountService.withdraw(account.getId(), null)
         );
     }
 
-    @ Test
+    @Test
     void withdrawFromNonexistentAccountThrows() {
         assertThrows(
-                RuntimeException.class,
-                () -> accountService.withdraw("ACC-404", new BigDecimal("10.00"))        );
+                AccountNotFoundException.class,
+                () -> accountService.withdraw("ACC-404", new BigDecimal("10.00"))
+        );
     }
 
     @Test
     void getBalanceForExistingAccountReturnsCorrectBalance() {
-        Account account = accountService.createAdditionalAccount(
-                "CUST-001",
-                AccountType.CHECKING,
-                new BigDecimal("500.00")
-        );
+        Account account = createCheckingAccount("500.00");
 
         BigDecimal balance = accountService.getBalance(account.getId());
 
@@ -144,11 +158,7 @@ class AccountServiceTest {
 
     @Test
     void depositIntoExistingAccountSucceeds() {
-        Account account = accountService.createAdditionalAccount(
-                "CUST-001",
-                AccountType.CHECKING,
-                new BigDecimal("100.00")
-        );
+        Account account = createCheckingAccount("100.00");
 
         Account updatedAccount = accountService.depositIntoExistingAccount(
                 account.getId(),
@@ -169,11 +179,7 @@ class AccountServiceTest {
 
     @Test
     void depositWithZeroAmountThrows() {
-        Account account = accountService.createAdditionalAccount(
-                "CUST-001",
-                AccountType.CHECKING,
-                new BigDecimal("100.00")
-        );
+        Account account = createCheckingAccount("100.00");
 
         assertThrows(
                 InvalidDepositAmountException.class,
@@ -183,15 +189,117 @@ class AccountServiceTest {
 
     @Test
     void depositWithNegativeAmountThrows() {
-        Account account = accountService.createAdditionalAccount(
-                "CUST-001",
-                AccountType.CHECKING,
-                new BigDecimal("100.00")
-        );
+        Account account = createCheckingAccount("100.00");
 
         assertThrows(
                 InvalidDepositAmountException.class,
                 () -> accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("-10.00"))
         );
+    }
+
+    @Test
+    void transactionHistoryIncludesDepositsAndWithdrawals() {
+        Account account = createCheckingAccount("100.00");
+
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("25.00"));
+        accountService.withdraw(account.getId(), new BigDecimal("10.00"));
+
+        List<Transaction> history = accountService.getTransactionHistory(account.getId());
+
+        assertEquals(3, history.size());
+        assertEquals(TransactionType.ACCOUNT_OPENED, history.get(0).getType());
+        assertEquals(TransactionType.DEPOSIT, history.get(1).getType());
+        assertEquals(TransactionType.WITHDRAWAL, history.get(2).getType());
+    }
+
+    @Test
+    void getTransactionHistoryForMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.getTransactionHistory("ACC-404")
+        );
+    }
+
+    @Test
+    void closeAccountRemovesItAndKeepsHistory() {
+        Account account = createCheckingAccount("120.00");
+
+        BigDecimal cashOutAmount = accountService.closeAccount(account.getId());
+
+        assertEquals(new BigDecimal("120.00"), cashOutAmount);
+        assertTrue(bank.findAccount(account.getId()).isEmpty());
+        assertTrue(bank.findCustomer("CUST-001").orElseThrow().getAccountIds().isEmpty());
+        assertEquals(2, accountService.getTransactionHistory(account.getId()).size());
+        assertEquals(
+                TransactionType.ACCOUNT_CLOSED,
+                accountService.getTransactionHistory(account.getId()).get(1).getType()
+        );
+    }
+
+    @Test
+    void transferMovesMoneyAndRecordsBothSides() {
+        Account source = createCheckingAccount("100.00");
+        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+
+        accountService.transfer(source.getId(), target.getId(), new BigDecimal("30.00"));
+
+        assertEquals(new BigDecimal("70.00"), bank.findAccount(source.getId()).orElseThrow().getBalance());
+        assertEquals(new BigDecimal("70.00"), bank.findAccount(target.getId()).orElseThrow().getBalance());
+        assertEquals(TransactionType.TRANSFER_OUT, lastTransaction(source.getId()).getType());
+        assertEquals(TransactionType.TRANSFER_IN, lastTransaction(target.getId()).getType());
+        assertEquals(target.getId(), lastTransaction(source.getId()).getRelatedAccountId());
+    }
+
+    @Test
+    void transferToSameAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                InvalidTransferException.class,
+                () -> accountService.transfer(account.getId(), account.getId(), BigDecimal.ONE)
+        );
+    }
+
+    @Test
+    void collectFeeRequiresValidAdminCredentials() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.collectFee("admin", "wrong", account.getId(), new BigDecimal("5.00"))
+        );
+    }
+
+    @Test
+    void collectFeeDebitsAccountAndRecordsHistory() {
+        Account account = createCheckingAccount("100.00");
+
+        Account updatedAccount = accountService.collectFee("admin", "admin123", account.getId(), new BigDecimal("5.00"));
+
+        assertEquals(new BigDecimal("95.00"), updatedAccount.getBalance());
+        assertEquals(TransactionType.FEE, lastTransaction(account.getId()).getType());
+    }
+
+    @Test
+    void addInterestCreditsAccountAndRecordsHistory() {
+        Account account = createCheckingAccount("100.00");
+
+        Account updatedAccount = accountService.addInterest("admin", "admin123", account.getId(), new BigDecimal("3.00"));
+
+        assertEquals(new BigDecimal("103.00"), updatedAccount.getBalance());
+        assertEquals(TransactionType.INTEREST, lastTransaction(account.getId()).getType());
+    }
+
+    private Account createCheckingAccount(String openingBalance) {
+        return accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal(openingBalance)
+        );
+    }
+
+    private Transaction lastTransaction(String accountId) {
+        List<Transaction> history = accountService.getTransactionHistory(accountId);
+        return history.get(history.size() - 1);
     }
 }

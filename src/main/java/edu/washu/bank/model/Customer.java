@@ -30,4 +30,8 @@ public class Customer {
     public void addAccountId(String accountId) {
         accountIds.add(Objects.requireNonNull(accountId, "accountId must not be null"));
     }
+
+    public void removeAccountId(String accountId) {
+        accountIds.remove(Objects.requireNonNull(accountId, "accountId must not be null"));
+    }
 }

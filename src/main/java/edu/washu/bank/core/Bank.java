@@ -1,18 +1,24 @@
 package edu.washu.bank.core;
 
 import edu.washu.bank.model.Account;
+import edu.washu.bank.model.AdminUser;
 import edu.washu.bank.model.Customer;
+import edu.washu.bank.model.Transaction;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Bank {
     private final Map<String, Customer> customers = new LinkedHashMap<>();
     private final Map<String, Account> accounts = new LinkedHashMap<>();
+    private final Map<String, AdminUser> admins = new LinkedHashMap<>();
+    private final List<Transaction> transactions = new ArrayList<>();
     private int accountSequence = 1;
+    private int transactionSequence = 1;
 
     public void addCustomer(Customer customer) {
         customers.put(customer.getId(), customer);
@@ -30,9 +36,19 @@ public class Bank {
         return Optional.ofNullable(accounts.get(accountId));
     }
 
+    public void removeAccount(String accountId) {
+        accounts.remove(accountId);
+    }
+
     public String nextAccountId() {
         String newId = String.format("ACC-%04d", accountSequence);
         accountSequence += 1;
+        return newId;
+    }
+
+    public String nextTransactionId() {
+        String newId = String.format("TXN-%06d", transactionSequence);
+        transactionSequence += 1;
         return newId;
     }
 
@@ -47,11 +63,45 @@ public class Bank {
         this.accountSequence = accountSequence;
     }
 
+    public int getTransactionSequence() {
+        return transactionSequence;
+    }
+
+    public void setTransactionSequence(int transactionSequence) {
+        this.transactionSequence = transactionSequence;
+    }
+
     public List<Customer> getCustomersSnapshot() {
         return new ArrayList<>(customers.values());
     }
 
     public List<Account> getAccountsSnapshot() {
         return new ArrayList<>(accounts.values());
+    }
+
+    public void addAdmin(AdminUser adminUser) {
+        admins.put(adminUser.getUsername(), adminUser);
+    }
+
+    public Optional<AdminUser> findAdmin(String username) {
+        return Optional.ofNullable(admins.get(username));
+    }
+
+    public List<AdminUser> getAdminsSnapshot() {
+        return new ArrayList<>(admins.values());
+    }
+
+    public void addTransaction(Transaction transaction) {
+        transactions.add(transaction);
+    }
+
+    public List<Transaction> getTransactionsSnapshot() {
+        return new ArrayList<>(transactions);
+    }
+
+    public List<Transaction> findTransactionsForAccount(String accountId) {
+        return transactions.stream()
+                .filter(transaction -> transaction.getAccountId().equals(accountId))
+                .collect(Collectors.toList());
     }
 }

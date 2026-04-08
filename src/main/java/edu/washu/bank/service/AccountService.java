@@ -2,16 +2,20 @@ package edu.washu.bank.service;
 
 import edu.washu.bank.core.Bank;
 import edu.washu.bank.exception.AccountNotFoundException;
+import edu.washu.bank.exception.AuthenticationException;
 import edu.washu.bank.exception.CustomerNotFoundException;
 import edu.washu.bank.exception.InvalidDepositAmountException;
 import edu.washu.bank.exception.InvalidOpeningDepositException;
 import edu.washu.bank.exception.InvalidTransferException;
-import edu.washu.bank.exception.AccountNotFoundException;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
+import edu.washu.bank.model.AdminUser;
 import edu.washu.bank.model.Customer;
+import edu.washu.bank.model.Transaction;
+import edu.washu.bank.model.TransactionType;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 
 public class AccountService {
@@ -33,44 +37,190 @@ public class AccountService {
         Account account = new Account(accountId, customer.getId(), accountType, openingDeposit);
         bank.saveAccount(account);
         customer.addAccountId(accountId);
+        recordTransaction(
+                accountId,
+                TransactionType.ACCOUNT_OPENED,
+                openingDeposit,
+                openingDeposit,
+                null,
+                "Account opened"
+        );
         return account;
     }
 
     public Account depositIntoExistingAccount(String accountId, BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidDepositAmountException("Deposit amount must be greater than 0");
-        }
-
-        Account existingAccount = bank.findAccount(accountId)
-                .orElseThrow(() -> new AccountNotFoundException(accountId));
-
+        validateDepositAmount(amount);
+        Account existingAccount = requireAccount(accountId);
         Account updatedAccount = existingAccount.deposit(amount);
         bank.saveAccount(updatedAccount);
+        recordTransaction(
+                accountId,
+                TransactionType.DEPOSIT,
+                amount,
+                updatedAccount.getBalance(),
+                null,
+                "Deposit"
+        );
         return updatedAccount;
     }
 
-    public void withdraw(String accountId, BigDecimal amount) {
-        Account account = bank.findAccount(accountId)
-                .orElseThrow(() -> new AccountNotFoundException(accountId));
-
-        BigDecimal currentBalance = account.getBalance();
-        
-        validateWithdrawalAmount(amount, currentBalance);
-        account.withdraw(amount);
-    }
-
-    private void validateWithdrawalAmount(BigDecimal amount, BigDecimal currentBalance) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidTransferException("Withdrawal amount must be greater than zero.");
-        }
-        if (currentBalance.compareTo(amount) < 0) {
-            throw new InvalidTransferException("Insufficient funds for withdrawal.");
-        }
+    public Account withdraw(String accountId, BigDecimal amount) {
+        Account account = requireAccount(accountId);
+        validateDebitAmount(amount, account.getBalance(), "Withdrawal amount must be greater than zero.");
+        Account updatedAccount = account.withdraw(amount);
+        bank.saveAccount(updatedAccount);
+        recordTransaction(
+                accountId,
+                TransactionType.WITHDRAWAL,
+                amount,
+                updatedAccount.getBalance(),
+                null,
+                "Withdrawal"
+        );
+        return updatedAccount;
     }
 
     public BigDecimal getBalance(String accountId) {
-        Account account = bank.findAccount(accountId)
+        return requireAccount(accountId).getBalance();
+    }
+
+    public List<Transaction> getTransactionHistory(String accountId) {
+        List<Transaction> history = bank.findTransactionsForAccount(accountId);
+        if (history.isEmpty() && bank.findAccount(accountId).isEmpty()) {
+            throw new AccountNotFoundException(accountId);
+        }
+        return history;
+    }
+
+    public BigDecimal closeAccount(String accountId) {
+        Account account = requireAccount(accountId);
+        BigDecimal closingBalance = account.getBalance();
+        recordTransaction(
+                accountId,
+                TransactionType.ACCOUNT_CLOSED,
+                closingBalance,
+                BigDecimal.ZERO,
+                null,
+                "Account closed"
+        );
+        bank.removeAccount(accountId);
+        bank.findCustomer(account.getCustomerId()).ifPresent(customer -> customer.removeAccountId(accountId));
+        return closingBalance;
+    }
+
+    public void transfer(String fromAccountId, String toAccountId, BigDecimal amount) {
+        if (Objects.equals(fromAccountId, toAccountId)) {
+            throw new InvalidTransferException("Cannot transfer to the same account.");
+        }
+
+        Account fromAccount = requireAccount(fromAccountId);
+        Account toAccount = requireAccount(toAccountId);
+        validateDebitAmount(amount, fromAccount.getBalance(), "Transfer amount must be greater than zero.");
+
+        Account updatedFrom = fromAccount.withdraw(amount);
+        Account updatedTo = toAccount.deposit(amount);
+        bank.saveAccount(updatedFrom);
+        bank.saveAccount(updatedTo);
+        recordTransaction(
+                fromAccountId,
+                TransactionType.TRANSFER_OUT,
+                amount,
+                updatedFrom.getBalance(),
+                toAccountId,
+                "Transfer to " + toAccountId
+        );
+        recordTransaction(
+                toAccountId,
+                TransactionType.TRANSFER_IN,
+                amount,
+                updatedTo.getBalance(),
+                fromAccountId,
+                "Transfer from " + fromAccountId
+        );
+    }
+
+    public Account collectFee(String username, String password, String accountId, BigDecimal amount) {
+        authenticateAdmin(username, password);
+        Account account = requireAccount(accountId);
+        validateDebitAmount(amount, account.getBalance(), "Fee amount must be greater than zero.");
+        Account updatedAccount = account.withdraw(amount);
+        bank.saveAccount(updatedAccount);
+        recordTransaction(
+                accountId,
+                TransactionType.FEE,
+                amount,
+                updatedAccount.getBalance(),
+                null,
+                "Administrative fee"
+        );
+        return updatedAccount;
+    }
+
+    public Account addInterest(String username, String password, String accountId, BigDecimal amount) {
+        authenticateAdmin(username, password);
+        validatePositiveAmount(amount, "Interest amount must be greater than zero.");
+        Account account = requireAccount(accountId);
+        Account updatedAccount = account.deposit(amount);
+        bank.saveAccount(updatedAccount);
+        recordTransaction(
+                accountId,
+                TransactionType.INTEREST,
+                amount,
+                updatedAccount.getBalance(),
+                null,
+                "Interest payment"
+        );
+        return updatedAccount;
+    }
+
+    private void authenticateAdmin(String username, String password) {
+        AdminUser adminUser = bank.findAdmin(username)
+                .orElseThrow(() -> new AuthenticationException("Invalid admin credentials."));
+        if (!adminUser.getPassword().equals(password)) {
+            throw new AuthenticationException("Invalid admin credentials.");
+        }
+    }
+
+    private Account requireAccount(String accountId) {
+        return bank.findAccount(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
-        return account.getBalance();
+    }
+
+    private void validateDepositAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidDepositAmountException("Deposit amount must be greater than 0");
+        }
+    }
+
+    private void validatePositiveAmount(BigDecimal amount, String message) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidTransferException(message);
+        }
+    }
+
+    private void validateDebitAmount(BigDecimal amount, BigDecimal balance, String amountErrorMessage) {
+        validatePositiveAmount(amount, amountErrorMessage);
+        if (balance.compareTo(amount) < 0) {
+            throw new InvalidTransferException("Insufficient funds.");
+        }
+    }
+
+    private void recordTransaction(
+            String accountId,
+            TransactionType type,
+            BigDecimal amount,
+            BigDecimal balanceAfter,
+            String relatedAccountId,
+            String description
+    ) {
+        bank.addTransaction(new Transaction(
+                bank.nextTransactionId(),
+                accountId,
+                type,
+                amount,
+                balanceAfter,
+                relatedAccountId,
+                description
+        ));
     }
 }

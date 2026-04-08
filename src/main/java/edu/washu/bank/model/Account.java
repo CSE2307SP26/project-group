@@ -1,14 +1,15 @@
 package edu.washu.bank.model;
 
+import edu.washu.bank.exception.InvalidTransferException;
+
 import java.math.BigDecimal;
 import java.util.Objects;
-import edu.washu.bank.exception.InvalidTransferException;
 
 public class Account {
     private final String id;
     private final String customerId;
     private final AccountType type;
-    private BigDecimal balance;
+    private final BigDecimal balance;
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance) {
         this.id = Objects.requireNonNull(id, "id must not be null");
@@ -34,20 +35,23 @@ public class Account {
     }
 
     public Account deposit(BigDecimal amount) {
-        return new Account(id, customerId, type, balance.add(amount));
+        return applyDelta(amount);
     }
-  
-    public void withdraw(BigDecimal amount) {
-        if (!isWithdrawalValid(amount)) {
+
+    public Account withdraw(BigDecimal amount) {
+        validateWithdrawalAmount(amount);
+        return applyDelta(amount.negate());
+    }
+
+    private Account applyDelta(BigDecimal amountDelta) {
+        return new Account(id, customerId, type, balance.add(amountDelta));
+    }
+
+    private void validateWithdrawalAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0 || balance.compareTo(amount) < 0) {
             throw new InvalidTransferException(
-                "Withdrawal amount must be greater than zero and less than or equal to the current balance."
+                    "Withdrawal amount must be greater than zero and less than or equal to the current balance."
             );
         }
-        balance = balance.subtract(amount);
     }
-
-    private boolean isWithdrawalValid(BigDecimal amount) {
-        return amount.compareTo(BigDecimal.ZERO) > 0 && balance.compareTo(amount) >= 0;
-    }
-
 }
