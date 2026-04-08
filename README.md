@@ -35,6 +35,11 @@ Windows (PowerShell):
 * `.\gradlew.bat run --args="deposit ACC-0001 50.00"` (use the account id printed by `create-account`)
 * `.\gradlew.bat run --args="withdraw ACC-0001 25.00"` (use the account id printed by `create-account`)
 * `.\gradlew.bat run --args="check-balance ACC-0001"` (use the account id printed by `create-account`)
+* `.\gradlew.bat run --args="transaction-history ACC-0001"`
+* `.\gradlew.bat run --args="transfer ACC-0001 ACC-0002 10.00"`
+* `.\gradlew.bat run --args="close-account ACC-0001"`
+* `.\gradlew.bat run --args="collect-fee admin admin123 ACC-0001 5.00"`
+* `.\gradlew.bat run --args="add-interest admin admin123 ACC-0001 3.00"`
 * `.\gradlew.bat run --args="clear-data"` (wipes the local database and re-seeds the demo customer `CUST-001`)
 
 macOS/Linux:
@@ -46,17 +51,30 @@ macOS/Linux:
 * `./gradlew run --args="deposit ACC-0001 50.00"`
 * `./gradlew run --args="withdraw ACC-0001 25.00"`
 * `./gradlew run --args="check-balance ACC-0001"`
+* `./gradlew run --args="transaction-history ACC-0001"`
+* `./gradlew run --args="transfer ACC-0001 ACC-0002 10.00"`
+* `./gradlew run --args="close-account ACC-0001"`
+* `./gradlew run --args="collect-fee admin admin123 ACC-0001 5.00"`
+* `./gradlew run --args="add-interest admin admin123 ACC-0001 3.00"`
 * `./gradlew run --args="clear-data"`
 
-**Persistence:** Account data is stored in a local SQLite file named `bank.db` in the working directory (created on first run). Separate `gradlew run` invocations share this file, so balances survive between commands. To use a different path: add `-Dbank.db.file=/absolute/path/to/bank.db` to the `gradlew` command (before `run`).
+**Persistence:** Account data is stored in a local SQLite file named `bank.db` in the working directory (created on first run). Separate `gradlew run` invocations share this file, so balances and transaction history survive between commands. To use a different path: add `-Dbank.db.file=/absolute/path/to/bank.db` to the Java process before `run` (for example through `JAVA_TOOL_OPTIONS`).
 
-Implemented in this iteration:
+**Seeded admin credentials:** username `admin`, password `admin123`
 
+Implemented features:
+
+* User story **#1**: deposit into an existing account
+* User story **#2**: withdraw from an account
+* User story **#3**: check an account balance
+* User story **#4**: view transaction history for an account
 * User story **#5**: create an additional account for an existing customer
-* User story **#3**: check an account balance via `check-balance <accountId>`
-* Validation (unknown customer, invalid opening deposit, missing account) and unit tests
-* Command-line commands: `create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>`, `deposit <accountId> <amount>`, `withdraw <accountId> <amount>`, `check-balance <accountId>`, `clear-data`
-* SQLite-backed storage so CLI runs persist state to disk
+* User story **#6**: close an existing account
+* User story **#7**: transfer money from one account to another
+* User story **#8**: bank administrator can collect fees from existing accounts
+* User story **#9**: bank administrator can add an interest payment to an existing account
+* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `clear-data`
+* SQLite-backed storage persists customers, accounts, transaction history, and admin credentials between CLI runs
 
 ---
 
