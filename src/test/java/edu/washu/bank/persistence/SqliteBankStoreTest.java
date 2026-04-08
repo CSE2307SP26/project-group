@@ -2,6 +2,7 @@ package edu.washu.bank.persistence;
 
 import edu.washu.bank.core.Bank;
 import edu.washu.bank.model.AccountType;
+import edu.washu.bank.model.TransactionType;
 import edu.washu.bank.service.AccountService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,7 +24,9 @@ class SqliteBankStoreTest {
         Bank bank = store.loadOrInitialize();
 
         assertTrue(bank.findCustomer("CUST-001").isPresent());
+        assertTrue(bank.findAdmin(SqliteBankStore.SEEDED_ADMIN_USERNAME).isPresent());
         assertEquals(1, bank.getAccountSequence());
+        assertEquals(1, bank.getTransactionSequence());
     }
 
     @Test
@@ -50,6 +53,48 @@ class SqliteBankStoreTest {
     }
 
     @Test
+    void saveAndReloadPersistsTransactionHistoryAndAdminActions(@TempDir Path tempDir) throws SQLException {
+        Path db = tempDir.resolve("bank.db");
+        SqliteBankStore store = new SqliteBankStore(db);
+        Bank bank = store.loadOrInitialize();
+        AccountService accountService = new AccountService(bank);
+
+        var first = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal("100.00")
+        );
+        var second = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("50.00")
+        );
+        accountService.transfer(first.getId(), second.getId(), new BigDecimal("10.00"));
+        accountService.collectFee(
+                SqliteBankStore.SEEDED_ADMIN_USERNAME,
+                SqliteBankStore.SEEDED_ADMIN_PASSWORD,
+                first.getId(),
+                new BigDecimal("5.00")
+        );
+        accountService.addInterest(
+                SqliteBankStore.SEEDED_ADMIN_USERNAME,
+                SqliteBankStore.SEEDED_ADMIN_PASSWORD,
+                second.getId(),
+                new BigDecimal("2.00")
+        );
+        store.saveFullState(bank);
+
+        Bank reloaded = new SqliteBankStore(db).loadOrInitialize();
+        AccountService reloadedService = new AccountService(reloaded);
+
+        assertTrue(reloaded.findAdmin(SqliteBankStore.SEEDED_ADMIN_USERNAME).isPresent());
+        assertEquals(3, reloadedService.getTransactionHistory(first.getId()).size());
+        assertEquals(3, reloadedService.getTransactionHistory(second.getId()).size());
+        assertEquals(TransactionType.FEE, reloadedService.getTransactionHistory(first.getId()).get(2).getType());
+        assertEquals(TransactionType.INTEREST, reloadedService.getTransactionHistory(second.getId()).get(2).getType());
+    }
+
+    @Test
     void clearAllAndReseedRemovesAccounts(@TempDir Path tempDir) throws SQLException {
         Path db = tempDir.resolve("bank.db");
         SqliteBankStore store = new SqliteBankStore(db);
@@ -67,6 +112,8 @@ class SqliteBankStoreTest {
 
         assertTrue(after.findCustomer("CUST-001").isPresent());
         assertTrue(after.findAccount(account.getId()).isEmpty());
+        assertTrue(after.findAdmin(SqliteBankStore.SEEDED_ADMIN_USERNAME).isPresent());
         assertEquals(1, after.getAccountSequence());
+        assertEquals(1, after.getTransactionSequence());
     }
 }
