@@ -11,15 +11,8 @@
 
 # Features planned to implement this iteration (iteration 2)
 
-* **#8** Close an existing account
-* **#9** Customer can transfer money from one account to another
-* **#10** Bank admin can collect fees from existing account
-* **#11** Bank admin can add interest to existing account
-* **#17** Admin login
-* **#18** Overdraft protection
-* **#19** Files to store user story info
-* **#20** Password protection
-
+10. A bank administrator should be able to freeze and unfreeze an account to block deposits and withdrawals. (Daniel)
+11. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
 ---
 
 # What commands are needed to compile and run your code from the command line?
@@ -38,6 +31,8 @@ Run the app with the required script:
 * `./runApp.sh close-account ACC-0001`
 * `./runApp.sh collect-fee admin admin123 ACC-0001 5.00`
 * `./runApp.sh add-interest admin admin123 ACC-0001 3.00`
+* `./runApp.sh freeze-account admin admin123 ACC-0001`
+* `./runApp.sh unfreeze-account admin admin123 ACC-0001`
 * `./runApp.sh clear-data` (wipes the local database and re-seeds the demo customer `CUST-001`)
 
 Notes:
@@ -65,7 +60,8 @@ Implemented features:
 * User story **#7**: transfer money from one account to another
 * User story **#8**: bank administrator can collect fees from existing accounts
 * User story **#9**: bank administrator can add an interest payment to an existing account
-* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `clear-data`
+* User story **#10** bank administrator can freeze and unfreeze an account to block deposits, withdrawals, and transfers
+* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `freeze-account`, `unfreeze-account`, `clear-data`
 * SQLite-backed storage persists customers, accounts, transaction history, and admin credentials between CLI runs
 
 ---

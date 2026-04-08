@@ -1,6 +1,7 @@
 package edu.washu.bank.persistence;
 
 import edu.washu.bank.core.Bank;
+import edu.washu.bank.exception.AccountFrozenException;
 import edu.washu.bank.model.AccountType;
 import edu.washu.bank.model.TransactionType;
 import edu.washu.bank.service.AccountService;
@@ -115,5 +116,34 @@ class SqliteBankStoreTest {
         assertTrue(after.findAdmin(SqliteBankStore.SEEDED_ADMIN_USERNAME).isPresent());
         assertEquals(1, after.getAccountSequence());
         assertEquals(1, after.getTransactionSequence());
+    }
+
+    @Test
+    void saveAndReloadPersistsFrozenAccountState(@TempDir Path tempDir) throws SQLException {
+        Path db = tempDir.resolve("bank.db");
+        SqliteBankStore store = new SqliteBankStore(db);
+        Bank bank = store.loadOrInitialize();
+        AccountService accountService = new AccountService(bank);
+
+        var account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.CHECKING,
+                new BigDecimal("100.00")
+        );
+        accountService.freezeAccount(
+                SqliteBankStore.SEEDED_ADMIN_USERNAME,
+                SqliteBankStore.SEEDED_ADMIN_PASSWORD,
+                account.getId()
+        );
+        store.saveFullState(bank);
+
+        Bank reloaded = new SqliteBankStore(db).loadOrInitialize();
+        AccountService reloadedService = new AccountService(reloaded);
+
+        assertTrue(reloaded.findAccount(account.getId()).orElseThrow().isFrozen());
+        org.junit.jupiter.api.Assertions.assertThrows(
+                AccountFrozenException.class,
+                () -> reloadedService.depositIntoExistingAccount(account.getId(), BigDecimal.ONE)
+        );
     }
 }

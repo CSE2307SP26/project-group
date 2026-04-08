@@ -59,6 +59,12 @@ public class BankCli {
             case "add-interest":
                 runAddInterest(args);
                 return;
+            case "freeze-account":
+                runFreezeAccount(args);
+                return;
+            case "unfreeze-account":
+                runUnfreezeAccount(args);
+                return;
             case "clear-data":
                 runClearData();
                 return;
@@ -325,6 +331,42 @@ public class BankCli {
         }
     }
 
+    private void runFreezeAccount(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for freeze-account.");
+            printUsage();
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.freezeAccount(args[1], args[2], args[3]);
+            store.saveFullState(bank);
+            System.out.println("Froze account " + updatedAccount.getId() + ".");
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void runUnfreezeAccount(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for unfreeze-account.");
+            printUsage();
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.unfreezeAccount(args[1], args[2], args[3]);
+            store.saveFullState(bank);
+            System.out.println("Unfroze account " + updatedAccount.getId() + ".");
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     private void runClearData() {
         try {
             store.clearAllAndReseed();
@@ -354,6 +396,8 @@ public class BankCli {
         System.out.println("  transfer <fromAccountId> <toAccountId> <amount>");
         System.out.println("  collect-fee <adminUsername> <adminPassword> <accountId> <amount>");
         System.out.println("  add-interest <adminUsername> <adminPassword> <accountId> <amount>");
+        System.out.println("  freeze-account <adminUsername> <adminPassword> <accountId>");
+        System.out.println("  unfreeze-account <adminUsername> <adminPassword> <accountId>");
         System.out.println("  check-balance <accountId>");
         System.out.println("  clear-data");
         System.out.println("Examples:");
@@ -365,5 +409,7 @@ public class BankCli {
         System.out.println("  transfer ACC-0001 ACC-0002 10.00");
         System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
         System.out.println("  add-interest admin admin123 ACC-0001 3.00");
+        System.out.println("  freeze-account admin admin123 ACC-0001");
+        System.out.println("  unfreeze-account admin admin123 ACC-0001");
     }
 }
