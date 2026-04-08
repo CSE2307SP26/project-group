@@ -11,15 +11,8 @@
 
 # Features planned to implement this iteration (iteration 2)
 
-* **#8** Close an existing account
-* **#9** Customer can transfer money from one account to another
-* **#10** Bank admin can collect fees from existing account
-* **#11** Bank admin can add interest to existing account
-* **#17** Admin login
-* **#18** Overdraft protection
-* **#19** Files to store user story info
-* **#20** Password protection
-
+11. A bank administrator should be able to freeze an account to block deposits and withdrawals. (Daniel)
+12. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
 ---
 
 # What commands are needed to compile and run your code from the command line?
