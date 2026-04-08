@@ -198,4 +198,9 @@ public class AccountService {
                 description
         ));
     }
+
+    public List<Customer> listCustomers(String username, String password) {
+        authenticateAdmin(username, password);
+        return bank.getCustomersSnapshot();
+    }
 }

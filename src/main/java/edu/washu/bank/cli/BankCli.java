@@ -6,6 +6,7 @@ import edu.washu.bank.model.AccountType;
 import edu.washu.bank.model.Transaction;
 import edu.washu.bank.persistence.SqliteBankStore;
 import edu.washu.bank.service.AccountService;
+import edu.washu.bank.model.Customer;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -61,6 +62,9 @@ public class BankCli {
                 return;
             case "clear-data":
                 runClearData();
+                return;
+            case "list-customers":
+                runListCustomers(args);
                 return;
             default:
                 System.out.println("Unknown command: " + args[0]);
@@ -335,6 +339,32 @@ public class BankCli {
         }
     }
 
+    private void runListCustomers(String[] args) {
+        if (args.length != 3) {
+            System.out.println("Invalid arguments for list-customers.");
+            printUsage();
+            return;
+        }
+
+        try {
+            List<Customer> customers = accountService.listCustomers(args[1], args[2]);
+            if (customers.isEmpty()) {
+                System.out.println("No customers found.");
+                return;
+            }
+            System.out.println("All customers:");
+            for (Customer customer : customers) {
+                System.out.println(
+                        "  " + customer.getId()
+                                + " | " + customer.getName()
+                                + " | accounts: " + customer.getAccountIds().size()
+                );
+            }
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
     private void printUsage() {
         System.out.println("Bank CLI (SQLite: " + dbPath.toAbsolutePath().normalize() + ")");
         System.out.println("Override path: -Dbank.db.file=/path/to/bank.db");
@@ -365,5 +395,6 @@ public class BankCli {
         System.out.println("  transfer ACC-0001 ACC-0002 10.00");
         System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
         System.out.println("  add-interest admin admin123 ACC-0001 3.00");
+        System.out.println("  list-customers <adminUsername> <adminPassword>");
     }
 }

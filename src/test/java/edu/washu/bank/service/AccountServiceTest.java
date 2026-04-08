@@ -290,6 +290,21 @@ class AccountServiceTest {
         assertEquals(TransactionType.INTEREST, lastTransaction(account.getId()).getType());
     }
 
+    @Test
+    void listCustomersWithValidAdminReturnsAllCustomers() {
+        List<Customer> customers = accountService.listCustomers("admin", "admin123");
+        assertEquals(1, customers.size());
+        assertEquals("CUST-001", customers.get(0).getId());
+    }
+
+    @Test
+    void listCustomersWithInvalidAdminThrows() {
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.listCustomers("admin", "wrongpassword")
+        );
+    }
+
     private Account createCheckingAccount(String openingBalance) {
         return accountService.createAdditionalAccount(
                 "CUST-001",
