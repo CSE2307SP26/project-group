@@ -1,5 +1,6 @@
 package edu.washu.bank.model;
 
+import edu.washu.bank.exception.InvalidDepositAmountException;
 import edu.washu.bank.exception.InvalidTransferException;
 
 import java.math.BigDecimal;
@@ -35,6 +36,7 @@ public class Account {
     }
 
     public Account deposit(BigDecimal amount) {
+        validateDepositAmount(amount);
         return applyDelta(amount);
     }
 
@@ -47,11 +49,18 @@ public class Account {
         return new Account(id, customerId, type, balance.add(amountDelta));
     }
 
+    private void validateDepositAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidDepositAmountException("Deposit amount must be greater than 0");
+        }
+    }
+
     private void validateWithdrawalAmount(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0 || balance.compareTo(amount) < 0) {
-            throw new InvalidTransferException(
-                    "Withdrawal amount must be greater than zero and less than or equal to the current balance."
-            );
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidTransferException("Withdrawal amount must be greater than zero.");
+        }
+        if (balance.compareTo(amount) < 0) {
+            throw new InvalidTransferException("Insufficient funds.");
         }
     }
 }

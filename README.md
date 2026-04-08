@@ -26,39 +26,31 @@
 
 From the project root:
 
-Windows (PowerShell):
+Run the app with the required script:
 
-* `.\gradlew.bat clean build`
-* `.\gradlew.bat test`
-* `.\gradlew.bat run --args="help"`
-* `.\gradlew.bat run --args="create-account CUST-001 CHECKING 100.00"`
-* `.\gradlew.bat run --args="deposit ACC-0001 50.00"` (use the account id printed by `create-account`)
-* `.\gradlew.bat run --args="withdraw ACC-0001 25.00"` (use the account id printed by `create-account`)
-* `.\gradlew.bat run --args="check-balance ACC-0001"` (use the account id printed by `create-account`)
-* `.\gradlew.bat run --args="transaction-history ACC-0001"`
-* `.\gradlew.bat run --args="transfer ACC-0001 ACC-0002 10.00"`
-* `.\gradlew.bat run --args="close-account ACC-0001"`
-* `.\gradlew.bat run --args="collect-fee admin admin123 ACC-0001 5.00"`
-* `.\gradlew.bat run --args="add-interest admin admin123 ACC-0001 3.00"`
-* `.\gradlew.bat run --args="clear-data"` (wipes the local database and re-seeds the demo customer `CUST-001`)
+* `./runApp.sh help`
+* `./runApp.sh create-account CUST-001 CHECKING 100.00`
+* `./runApp.sh deposit ACC-0001 50.00` (use the account id printed by `create-account`)
+* `./runApp.sh withdraw ACC-0001 25.00` (use the account id printed by `create-account`)
+* `./runApp.sh check-balance ACC-0001` (use the account id printed by `create-account`)
+* `./runApp.sh transaction-history ACC-0001`
+* `./runApp.sh transfer ACC-0001 ACC-0002 10.00`
+* `./runApp.sh close-account ACC-0001`
+* `./runApp.sh collect-fee admin admin123 ACC-0001 5.00`
+* `./runApp.sh add-interest admin admin123 ACC-0001 3.00`
+* `./runApp.sh clear-data` (wipes the local database and re-seeds the demo customer `CUST-001`)
 
-macOS/Linux:
+Notes:
 
-* `./gradlew clean build`
-* `./gradlew test`
-* `./gradlew run --args="help"`
-* `./gradlew run --args="create-account CUST-001 CHECKING 100.00"`
-* `./gradlew run --args="deposit ACC-0001 50.00"`
-* `./gradlew run --args="withdraw ACC-0001 25.00"`
-* `./gradlew run --args="check-balance ACC-0001"`
-* `./gradlew run --args="transaction-history ACC-0001"`
-* `./gradlew run --args="transfer ACC-0001 ACC-0002 10.00"`
-* `./gradlew run --args="close-account ACC-0001"`
-* `./gradlew run --args="collect-fee admin admin123 ACC-0001 5.00"`
-* `./gradlew run --args="add-interest admin admin123 ACC-0001 3.00"`
-* `./gradlew run --args="clear-data"`
+* `runApp.sh` compiles the Java sources and runs the app without requiring Gradle to launch it.
+* On the first run, the script downloads `sqlite-jdbc-3.47.2.0.jar` into `lib/`.
+* Windows users should run the script from a Bash-compatible shell such as Git Bash or WSL.
+* Gradle is still used for tests: `./gradlew test` on macOS/Linux or `.\gradlew.bat test` in PowerShell on Windows.
+* Reliable invocation:
+  * In Git Bash or WSL: `./runApp.sh help`
+  * From PowerShell: `bash ./runApp.sh help`
 
-**Persistence:** Account data is stored in a local SQLite file named `bank.db` in the working directory (created on first run). Separate `gradlew run` invocations share this file, so balances and transaction history survive between commands. To use a different path: add `-Dbank.db.file=/absolute/path/to/bank.db` to the Java process before `run` (for example through `JAVA_TOOL_OPTIONS`).
+**Persistence:** Account data is stored in a local SQLite file named `bank.db` in the working directory (created on first run). Separate `./runApp.sh` invocations share this file, so balances and transaction history survive between commands. To use a different path: add `-Dbank.db.file=/absolute/path/to/bank.db` to the Java process before launching the app.
 
 **Seeded admin credentials:** username `admin`, password `admin123`
 

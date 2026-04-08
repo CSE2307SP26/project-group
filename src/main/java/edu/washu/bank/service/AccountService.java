@@ -4,7 +4,6 @@ import edu.washu.bank.core.Bank;
 import edu.washu.bank.exception.AccountNotFoundException;
 import edu.washu.bank.exception.AuthenticationException;
 import edu.washu.bank.exception.CustomerNotFoundException;
-import edu.washu.bank.exception.InvalidDepositAmountException;
 import edu.washu.bank.exception.InvalidOpeningDepositException;
 import edu.washu.bank.exception.InvalidTransferException;
 import edu.washu.bank.model.Account;
@@ -49,7 +48,6 @@ public class AccountService {
     }
 
     public Account depositIntoExistingAccount(String accountId, BigDecimal amount) {
-        validateDepositAmount(amount);
         Account existingAccount = requireAccount(accountId);
         Account updatedAccount = existingAccount.deposit(amount);
         bank.saveAccount(updatedAccount);
@@ -66,7 +64,6 @@ public class AccountService {
 
     public Account withdraw(String accountId, BigDecimal amount) {
         Account account = requireAccount(accountId);
-        validateDebitAmount(amount, account.getBalance(), "Withdrawal amount must be greater than zero.");
         Account updatedAccount = account.withdraw(amount);
         bank.saveAccount(updatedAccount);
         recordTransaction(
@@ -115,7 +112,6 @@ public class AccountService {
 
         Account fromAccount = requireAccount(fromAccountId);
         Account toAccount = requireAccount(toAccountId);
-        validateDebitAmount(amount, fromAccount.getBalance(), "Transfer amount must be greater than zero.");
 
         Account updatedFrom = fromAccount.withdraw(amount);
         Account updatedTo = toAccount.deposit(amount);
@@ -142,7 +138,6 @@ public class AccountService {
     public Account collectFee(String username, String password, String accountId, BigDecimal amount) {
         authenticateAdmin(username, password);
         Account account = requireAccount(accountId);
-        validateDebitAmount(amount, account.getBalance(), "Fee amount must be greater than zero.");
         Account updatedAccount = account.withdraw(amount);
         bank.saveAccount(updatedAccount);
         recordTransaction(
@@ -158,7 +153,6 @@ public class AccountService {
 
     public Account addInterest(String username, String password, String accountId, BigDecimal amount) {
         authenticateAdmin(username, password);
-        validatePositiveAmount(amount, "Interest amount must be greater than zero.");
         Account account = requireAccount(accountId);
         Account updatedAccount = account.deposit(amount);
         bank.saveAccount(updatedAccount);
@@ -184,25 +178,6 @@ public class AccountService {
     private Account requireAccount(String accountId) {
         return bank.findAccount(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
-    }
-
-    private void validateDepositAmount(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidDepositAmountException("Deposit amount must be greater than 0");
-        }
-    }
-
-    private void validatePositiveAmount(BigDecimal amount, String message) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidTransferException(message);
-        }
-    }
-
-    private void validateDebitAmount(BigDecimal amount, BigDecimal balance, String amountErrorMessage) {
-        validatePositiveAmount(amount, amountErrorMessage);
-        if (balance.compareTo(amount) < 0) {
-            throw new InvalidTransferException("Insufficient funds.");
-        }
     }
 
     private void recordTransaction(
