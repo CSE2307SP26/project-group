@@ -15,6 +15,10 @@
 11. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
 12. A bank customer should be able to list all of their accounts. (Bobby)
 13. A bank administrator should be able to view all customers in the bank. (Bobby)
+14. A bank customer should be able to set password for their account (Rosie)
+15. A bank customer should be able to view the interest rate for a savings account. (Nina)
+16. A bank administrator should be able to manage the interest rate for a savings account. (Nina)
+
 ---
 
 # What commands are needed to compile and run your code from the command line?
@@ -24,15 +28,18 @@ From the project root:
 Run the app with the required script:
 
 * `./runApp.sh help`
-* `./runApp.sh create-account CUST-001 CHECKING 100.00`
+* `./runApp.sh create-account CUST-001 123 CHECKING 100.00`
 * `./runApp.sh deposit ACC-0001 50.00` (use the account id printed by `create-account`)
-* `./runApp.sh withdraw ACC-0001 25.00` (use the account id printed by `create-account`)
+* `./runApp.sh withdraw ACC-0001 123 25.00 123` (use the account id printed by `create-account`)
 * `./runApp.sh check-balance ACC-0001` (use the account id printed by `create-account`)
+* `./runApp.sh total-balance CUST-001`
 * `./runApp.sh transaction-history ACC-0001`
-* `./runApp.sh transfer ACC-0001 ACC-0002 10.00`
-* `./runApp.sh close-account ACC-0001`
+* `./runApp.sh transfer ACC-0001 ACC-0002 10.00 123`
+* `./runApp.sh close-account ACC-0001 123`
 * `./runApp.sh collect-fee admin admin123 ACC-0001 5.00`
 * `./runApp.sh add-interest admin admin123 ACC-0001 3.00`
+* `./runApp.sh freeze-account admin admin123 ACC-0001`
+* `./runApp.sh unfreeze-account admin admin123 ACC-0001`
 * `./runApp.sh clear-data` (wipes the local database and re-seeds the demo customer `CUST-001`)
 * `./runApp.sh list-accounts CUST-001`
 * `./runApp.sh list-customers admin admin123`
@@ -62,7 +69,20 @@ Implemented features:
 * User story **#7**: transfer money from one account to another
 * User story **#8**: bank administrator can collect fees from existing accounts
 * User story **#9**: bank administrator can add an interest payment to an existing account
-* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `clear-data`
+* User story **#10** bank administrator can freeze and unfreeze an account to block deposits, withdrawals, and transfers
+* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `freeze-account`, `unfreeze-account`, `clear-data`
+* User story **#11**: customer can view the total balance across all of their accounts
+* Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `total-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `clear-data`
+* User story **#12**: customer can list all of their accounts
+* Command-line command: `list-accounts`
+* User story **#13**: bank administrator can view all customers in the bank
+* Command-line command: `list-customers`
+* User story **#14**: customer accounts support password-protected operations
+* Password-protected commands: `create-account`, `withdraw`, `close-account`, `transfer`
+* User story **#15**: customer can view the interest rate for a savings account
+* Command-line command: `view-interest-rate`
+* User story **#16**: bank administrator can manage the interest rate for a savings account
+* Command-line command: `set-interest-rate`
 * SQLite-backed storage persists customers, accounts, transaction history, and admin credentials between CLI runs
 
 ---
