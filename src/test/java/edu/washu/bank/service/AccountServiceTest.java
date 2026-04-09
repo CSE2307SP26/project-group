@@ -403,6 +403,24 @@ class AccountServiceTest {
     }
 
     @Test
+    void listAccountsForExistingCustomerReturnsAllAccounts() {
+        accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
+        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("50.00"));
+
+        List<Account> accounts = accountService.listAccounts("CUST-001");
+
+        assertEquals(2, accounts.size());
+    }
+
+    @Test
+    void listAccountsForMissingCustomerThrows() {
+        assertThrows(
+                CustomerNotFoundException.class,
+                () -> accountService.listAccounts("CUST-404")
+        );
+    }
+  
+    @Test
     void addInterestToFrozenAccountThrows() {
         Account account = createCheckingAccount("100.00");
         accountService.freezeAccount("admin", "admin123", account.getId());
