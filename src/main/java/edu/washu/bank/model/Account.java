@@ -12,17 +12,34 @@ public class Account {
     private final AccountType type;
     private final BigDecimal balance;
     private final BigDecimal interestRate;
+    private final boolean frozen;
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance) {
-        this(id, customerId, type, balance, BigDecimal.ZERO);
+        this(id, customerId, type, balance, BigDecimal.ZERO, false);
     }
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance, BigDecimal interestRate) {
+        this(id, customerId, type, balance, interestRate, false);
+    }
+
+    public Account(String id, String customerId, AccountType type, BigDecimal balance, boolean frozen) {
+        this(id, customerId, type, balance, BigDecimal.ZERO, frozen);
+    }
+
+    public Account(
+            String id,
+            String customerId,
+            AccountType type,
+            BigDecimal balance,
+            BigDecimal interestRate,
+            boolean frozen
+    ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.customerId = Objects.requireNonNull(customerId, "customerId must not be null");
         this.type = Objects.requireNonNull(type, "type must not be null");
         this.balance = Objects.requireNonNull(balance, "balance must not be null");
         this.interestRate = Objects.requireNonNull(interestRate, "interestRate must not be null");
+        this.frozen = frozen;
 
         if (interestRate.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Interest rate must not be negative.");
@@ -49,6 +66,10 @@ public class Account {
         return interestRate;
     }
 
+    public boolean isFrozen() {
+        return frozen;
+    }
+
     public Account deposit(BigDecimal amount) {
         validateDepositAmount(amount);
         return applyDelta(amount);
@@ -66,11 +87,19 @@ public class Account {
         if (newInterestRate == null || newInterestRate.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Interest rate must be 0 or greater.");
         }
-        return new Account(id, customerId, type, balance, newInterestRate);
+        return new Account(id, customerId, type, balance, newInterestRate, frozen);
+    }
+
+    public Account freeze() {
+        return new Account(id, customerId, type, balance, interestRate, true);
+    }
+
+    public Account unfreeze() {
+        return new Account(id, customerId, type, balance, interestRate, false);
     }
 
     private Account applyDelta(BigDecimal amountDelta) {
-        return new Account(id, customerId, type, balance.add(amountDelta), interestRate);
+        return new Account(id, customerId, type, balance.add(amountDelta), interestRate, frozen);
     }
 
     private void validateDepositAmount(BigDecimal amount) {
