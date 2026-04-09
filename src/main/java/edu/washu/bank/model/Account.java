@@ -11,6 +11,7 @@ public class Account {
     private final String customerId;
     private final AccountType type;
     private final BigDecimal balance;
+    private final BigDecimal alertBalanceThreshold;
     private final BigDecimal interestRate;
     private final boolean frozen;
 
@@ -38,6 +39,7 @@ public class Account {
         this.customerId = Objects.requireNonNull(customerId, "customerId must not be null");
         this.type = Objects.requireNonNull(type, "type must not be null");
         this.balance = Objects.requireNonNull(balance, "balance must not be null");
+        this.alertBalanceThreshold = new BigDecimal("50.00");
         this.interestRate = Objects.requireNonNull(interestRate, "interestRate must not be null");
         this.frozen = frozen;
 
@@ -62,6 +64,10 @@ public class Account {
         return balance;
     }
 
+    public BigDecimal getAlertBalanceThreshold() {
+        return alertBalanceThreshold;
+    }  
+    
     public BigDecimal getInterestRate() {
         return interestRate;
     }
@@ -77,6 +83,9 @@ public class Account {
 
     public Account withdraw(BigDecimal amount) {
         validateWithdrawalAmount(amount);
+        if (balance.subtract(amount).compareTo(alertBalanceThreshold) < 0) {
+            System.out.println("Alert: Account balance is below the alert threshold.");
+        }
         return applyDelta(amount.negate());
     }
 
