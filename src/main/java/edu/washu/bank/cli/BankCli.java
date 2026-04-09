@@ -63,6 +63,9 @@ public class BankCli {
             case "add-interest":
                 runAddInterest(args);
                 return;
+            case "view-interest-rate":
+                runViewInterestRate(args);
+                return;
             case "freeze-account":
                 runFreezeAccount(args);
                 return;
@@ -71,6 +74,9 @@ public class BankCli {
                 return;
             case "clear-data":
                 runClearData();
+                return;
+            case "set-interest-rate":
+                runSetInterestRate(args);
                 return;
             case "list-customers":
                 runListCustomers(args);
@@ -358,6 +364,35 @@ public class BankCli {
         }
     }
 
+    private void runSetInterestRate(String[] args) {
+        if (args.length != 5) {
+            System.out.println("Invalid arguments for set-interest-rate.");
+            printUsage();
+            return;
+        }
+
+        BigDecimal interestRate;
+        try {
+            interestRate = new BigDecimal(args[4]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid interest rate: " + args[4]);
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.setInterestRate(args[1], args[2], args[3], interestRate);
+            store.saveFullState(bank);
+            System.out.println(
+                    "Set interest rate for account " + updatedAccount.getId()
+                            + " to " + updatedAccount.getInterestRate()
+            );
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     private void runFreezeAccount(String[] args) {
         if (args.length != 4) {
             System.out.println("Invalid arguments for freeze-account.");
@@ -391,6 +426,23 @@ public class BankCli {
             System.out.println(ex.getMessage());
         } catch (SQLException ex) {
             System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void runViewInterestRate(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for view-interest-rate.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+
+        try {
+            BigDecimal interestRate = accountService.getInterestRate(accountId);
+            System.out.println("Account " + accountId + " interest rate: " + interestRate);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
@@ -483,6 +535,8 @@ public class BankCli {
         System.out.println("  list-accounts <customerId>");
         System.out.println("  check-balance <accountId>");
         System.out.println("  clear-data");
+        System.out.println("  set-interest-rate <adminUsername> <adminPassword> <accountId> <rate>");
+        System.out.println("  view-interest-rate <accountId>");
         System.out.println("Examples:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
         System.out.println("  check-balance ACC-0001");
@@ -493,6 +547,8 @@ public class BankCli {
         System.out.println("  transfer ACC-0001 ACC-0002 10.00");
         System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
         System.out.println("  add-interest admin admin123 ACC-0001 3.00");
+        System.out.println("  set-interest-rate admin admin123 ACC-0001 0.05");
+        System.out.println("  view-interest-rate ACC-0001");
         System.out.println("  list-customers <adminUsername> <adminPassword>");
         System.out.println("  list-accounts <customerId>");
         System.out.println("  freeze-account admin admin123 ACC-0001");

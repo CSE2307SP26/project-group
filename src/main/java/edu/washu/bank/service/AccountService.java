@@ -185,6 +185,26 @@ public class AccountService {
         return updatedAccount;
     }
 
+    public Account setInterestRate(String username, String password, String accountId, BigDecimal interestRate) {
+        authenticateAdmin(username, password);
+
+        Account account = requireAccount(accountId);
+        Account updatedAccount = account.withInterestRate(interestRate);
+
+        bank.saveAccount(updatedAccount);
+        return updatedAccount;
+    }
+
+    public BigDecimal getInterestRate(String accountId) {
+        Account account = requireAccount(accountId);
+
+        if (account.getType() != AccountType.SAVINGS) {
+            throw new IllegalArgumentException("Interest rates are only available for savings accounts.");
+        }
+
+        return account.getInterestRate();
+    }
+
     public Account freezeAccount(String username, String password, String accountId) {
         authenticateAdmin(username, password);
         Account account = requireAccount(accountId);

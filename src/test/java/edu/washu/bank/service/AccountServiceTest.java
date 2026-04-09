@@ -403,6 +403,47 @@ class AccountServiceTest {
     }
 
     @Test
+    void setInterestRateForSavingsAccountSucceeds() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        Account updatedAccount = accountService.setInterestRate(
+                "admin",
+                "admin123",
+                account.getId(),
+                new BigDecimal("0.05")
+        );
+
+        assertEquals(new BigDecimal("0.05"), updatedAccount.getInterestRate());
+        assertEquals(
+                new BigDecimal("0.05"),
+                bank.findAccount(account.getId()).orElseThrow().getInterestRate()
+        );
+    }
+
+    @Test
+    void setInterestRateWithInvalidAdminCredentialsThrows() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.setInterestRate(
+                        "admin",
+                        "wrong-password",
+                        account.getId(),
+                        new BigDecimal("0.05")
+                )
+        );
+    }
+
+    @Test
     void listCustomersWithValidAdminReturnsAllCustomers() {
         List<Customer> customers = accountService.listCustomers("admin", "admin123");
         assertEquals(1, customers.size());
@@ -414,6 +455,78 @@ class AccountServiceTest {
         assertThrows(
                 AuthenticationException.class,
                 () -> accountService.listCustomers("admin", "wrongpassword")
+        );
+    }
+
+    @Test
+    void setInterestRateForCheckingAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> accountService.setInterestRate(
+                        "admin",
+                        "admin123",
+                        account.getId(),
+                        new BigDecimal("0.05")
+                )
+        );
+    }
+
+    @Test
+    void setInterestRateWithNegativeRateThrows() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> accountService.setInterestRate(
+                        "admin",
+                        "admin123",
+                        account.getId(),
+                        new BigDecimal("-0.01")
+                )
+        );
+    }
+
+    @Test
+    void getInterestRateForSavingsAccountSucceeds() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        accountService.setInterestRate(
+                "admin",
+                "admin123",
+                account.getId(),
+                new BigDecimal("0.05")
+        );
+
+        BigDecimal interestRate = accountService.getInterestRate(account.getId());
+
+        assertEquals(new BigDecimal("0.05"), interestRate);
+    }
+
+    @Test
+    void getInterestRateForCheckingAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> accountService.getInterestRate(account.getId())
+        );
+    }
+
+    @Test
+    void getInterestRateForMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.getInterestRate("ACC-404")
         );
     }
 
@@ -456,7 +569,7 @@ class AccountServiceTest {
 
         assertEquals(new BigDecimal("115.00"), updatedAccount.getBalance());
     }
-  
+
     private Account createCheckingAccount(String openingBalance) {
         return accountService.createAdditionalAccount(
                 "CUST-001",
