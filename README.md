@@ -18,7 +18,6 @@
 14. A bank customer should be able to set password for their account (Rosie)
 15. A bank customer should be able to view the interest rate for a savings account. (Nina)
 16. A bank administrator should be able to manage the interest rate for a savings account. (Nina)
-
 ---
 
 # What commands are needed to compile and run your code from the command line?
