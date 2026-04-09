@@ -16,6 +16,8 @@
 12. A bank customer should be able to list all of their accounts. (Bobby)
 13. A bank administrator should be able to view all customers in the bank. (Bobby)
 14. A bank customer should be able to set password for their account (Rosie)
+15. A bank customer should be able to view the interest rate for a savings account. (Nina)
+16. A bank administrator should be able to manage the interest rate for a savings account. (Nina)
 
 ---
 
@@ -71,6 +73,16 @@ Implemented features:
 * Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `freeze-account`, `unfreeze-account`, `clear-data`
 * User story **#11**: customer can view the total balance across all of their accounts
 * Command-line commands: `create-account`, `deposit`, `withdraw`, `check-balance`, `total-balance`, `transaction-history`, `close-account`, `transfer`, `collect-fee`, `add-interest`, `clear-data`
+* User story **#12**: customer can list all of their accounts
+* Command-line command: `list-accounts`
+* User story **#13**: bank administrator can view all customers in the bank
+* Command-line command: `list-customers`
+* User story **#14**: customer accounts support password-protected operations
+* Password-protected commands: `create-account`, `withdraw`, `close-account`, `transfer`
+* User story **#15**: customer can view the interest rate for a savings account
+* Command-line command: `view-interest-rate`
+* User story **#16**: bank administrator can manage the interest rate for a savings account
+* Command-line command: `set-interest-rate`
 * SQLite-backed storage persists customers, accounts, transaction history, and admin credentials between CLI runs
 
 ---
