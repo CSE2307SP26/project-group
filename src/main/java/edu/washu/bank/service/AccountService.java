@@ -241,6 +241,11 @@ public class AccountService {
         ));
     }
 
+    public List<Customer> listCustomers(String username, String password) {
+        authenticateAdmin(username, password);
+        return bank.getCustomersSnapshot();
+    }
+
     public List<Account> listAccounts(String customerId) {
         Customer customer = bank.findCustomer(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException(customerId));

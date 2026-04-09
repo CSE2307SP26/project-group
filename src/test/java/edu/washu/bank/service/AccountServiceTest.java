@@ -403,6 +403,21 @@ class AccountServiceTest {
     }
 
     @Test
+    void listCustomersWithValidAdminReturnsAllCustomers() {
+        List<Customer> customers = accountService.listCustomers("admin", "admin123");
+        assertEquals(1, customers.size());
+        assertEquals("CUST-001", customers.get(0).getId());
+    }
+
+    @Test
+    void listCustomersWithInvalidAdminThrows() {
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.listCustomers("admin", "wrongpassword")
+        );
+    }
+
+    @Test
     void listAccountsForExistingCustomerReturnsAllAccounts() {
         accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
         accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("50.00"));
@@ -419,7 +434,7 @@ class AccountServiceTest {
                 () -> accountService.listAccounts("CUST-404")
         );
     }
-  
+
     @Test
     void addInterestToFrozenAccountThrows() {
         Account account = createCheckingAccount("100.00");
@@ -441,7 +456,7 @@ class AccountServiceTest {
 
         assertEquals(new BigDecimal("115.00"), updatedAccount.getBalance());
     }
-
+  
     private Account createCheckingAccount(String openingBalance) {
         return accountService.createAdditionalAccount(
                 "CUST-001",
