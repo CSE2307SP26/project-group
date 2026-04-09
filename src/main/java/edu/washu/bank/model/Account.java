@@ -11,12 +11,14 @@ public class Account {
     private final String customerId;
     private final AccountType type;
     private final BigDecimal balance;
+    private final BigDecimal alertBalanceThreshold;
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.customerId = Objects.requireNonNull(customerId, "customerId must not be null");
         this.type = Objects.requireNonNull(type, "type must not be null");
         this.balance = Objects.requireNonNull(balance, "balance must not be null");
+        this.alertBalanceThreshold = new BigDecimal("50.00");
     }
 
     public String getId() {
@@ -35,6 +37,10 @@ public class Account {
         return balance;
     }
 
+    public BigDecimal getAlertBalanceThreshold() {
+        return alertBalanceThreshold;
+    }
+
     public Account deposit(BigDecimal amount) {
         validateDepositAmount(amount);
         return applyDelta(amount);
@@ -42,6 +48,9 @@ public class Account {
 
     public Account withdraw(BigDecimal amount) {
         validateWithdrawalAmount(amount);
+        if (balance.subtract(amount).compareTo(alertBalanceThreshold) < 0) {
+            System.out.println("Alert: Account balance is below the alert threshold.");
+        }
         return applyDelta(amount.negate());
     }
 
