@@ -11,12 +11,18 @@ public class Account {
     private final String customerId;
     private final AccountType type;
     private final BigDecimal balance;
+    private final boolean frozen;
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance) {
+        this(id, customerId, type, balance, false);
+    }
+
+    public Account(String id, String customerId, AccountType type, BigDecimal balance, boolean frozen) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.customerId = Objects.requireNonNull(customerId, "customerId must not be null");
         this.type = Objects.requireNonNull(type, "type must not be null");
         this.balance = Objects.requireNonNull(balance, "balance must not be null");
+        this.frozen = frozen;
     }
 
     public String getId() {
@@ -35,6 +41,10 @@ public class Account {
         return balance;
     }
 
+    public boolean isFrozen() {
+        return frozen;
+    }
+
     public Account deposit(BigDecimal amount) {
         validateDepositAmount(amount);
         return applyDelta(amount);
@@ -45,8 +55,16 @@ public class Account {
         return applyDelta(amount.negate());
     }
 
+    public Account freeze() {
+        return new Account(id, customerId, type, balance, true);
+    }
+
+    public Account unfreeze() {
+        return new Account(id, customerId, type, balance, false);
+    }
+
     private Account applyDelta(BigDecimal amountDelta) {
-        return new Account(id, customerId, type, balance.add(amountDelta));
+        return new Account(id, customerId, type, balance.add(amountDelta), frozen);
     }
 
     private void validateDepositAmount(BigDecimal amount) {

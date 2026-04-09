@@ -62,6 +62,7 @@ public final class SqliteBankStore {
                             + "customer_id TEXT NOT NULL,"
                             + "type TEXT NOT NULL,"
                             + "balance TEXT NOT NULL,"
+                            + "frozen INTEGER NOT NULL DEFAULT 0,"
                             + "FOREIGN KEY (customer_id) REFERENCES customers(id))"
             );
             st.execute(
@@ -80,6 +81,7 @@ public final class SqliteBankStore {
                             + "password TEXT NOT NULL)"
             );
         }
+        ensureAccountsFrozenColumn(connection);
     }
 
     /**
@@ -178,6 +180,25 @@ public final class SqliteBankStore {
         }
     }
 
+    private static void ensureAccountsFrozenColumn(Connection c) throws SQLException {
+        boolean hasFrozenColumn = false;
+        try (Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA table_info(accounts)")) {
+            while (rs.next()) {
+                if ("frozen".equalsIgnoreCase(rs.getString("name"))) {
+                    hasFrozenColumn = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasFrozenColumn) {
+            try (Statement st = c.createStatement()) {
+                st.execute("ALTER TABLE accounts ADD COLUMN frozen INTEGER NOT NULL DEFAULT 0");
+            }
+        }
+    }
+
     private static Bank loadBank(Connection c) throws SQLException {
         Bank bank = new Bank();
         try (PreparedStatement ps = c.prepareStatement("SELECT key, value FROM bank_meta")) {
@@ -213,14 +234,15 @@ public final class SqliteBankStore {
         }
 
         try (PreparedStatement ps = c.prepareStatement(
-                "SELECT id, customer_id, type, balance FROM accounts ORDER BY id")) {
+                "SELECT id, customer_id, type, balance, frozen FROM accounts ORDER BY id")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String id = rs.getString("id");
                     String customerId = rs.getString("customer_id");
                     AccountType type = AccountType.valueOf(rs.getString("type"));
                     BigDecimal balance = new BigDecimal(rs.getString("balance"));
-                    Account account = new Account(id, customerId, type, balance);
+                    boolean frozen = rs.getInt("frozen") != 0;
+                    Account account = new Account(id, customerId, type, balance, frozen);
                     bank.saveAccount(account);
                     bank.findCustomer(customerId).ifPresent(customer -> customer.addAccountId(id));
                 }
@@ -287,12 +309,13 @@ public final class SqliteBankStore {
                     }
                 }
                 try (PreparedStatement ps = c.prepareStatement(
-                        "INSERT INTO accounts (id, customer_id, type, balance) VALUES (?, ?, ?, ?)")) {
+                        "INSERT INTO accounts (id, customer_id, type, balance, frozen) VALUES (?, ?, ?, ?, ?)")) {
                     for (Account account : bank.getAccountsSnapshot()) {
                         ps.setString(1, account.getId());
                         ps.setString(2, account.getCustomerId());
                         ps.setString(3, account.getType().name());
                         ps.setString(4, account.getBalance().toPlainString());
+                        ps.setInt(5, account.isFrozen() ? 1 : 0);
                         ps.executeUpdate();
                     }
                 }
