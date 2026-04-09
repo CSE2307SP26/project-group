@@ -13,6 +13,8 @@
 
 10. A bank administrator should be able to freeze and unfreeze an account to block deposits and withdrawals. (Daniel)
 11. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
+12. A bank customer should be able to list all of their accounts. (Bobby)
+13. A bank administrator should be able to view all customers in the bank. (Bobby)
 ---
 
 # What commands are needed to compile and run your code from the command line?
@@ -33,6 +35,8 @@ Run the app with the required script:
 * `./runApp.sh collect-fee admin admin123 ACC-0001 5.00`
 * `./runApp.sh add-interest admin admin123 ACC-0001 3.00`
 * `./runApp.sh clear-data` (wipes the local database and re-seeds the demo customer `CUST-001`)
+* `./runApp.sh list-accounts CUST-001`
+* `./runApp.sh list-customers admin admin123`
 
 Notes:
 
