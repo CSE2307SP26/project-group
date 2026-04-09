@@ -1,6 +1,7 @@
 package edu.washu.bank.service;
 
 import edu.washu.bank.core.Bank;
+import edu.washu.bank.exception.AccountFrozenException;
 import edu.washu.bank.exception.AccountNotFoundException;
 import edu.washu.bank.exception.AuthenticationException;
 import edu.washu.bank.exception.CustomerNotFoundException;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -179,6 +181,37 @@ class AccountServiceTest {
     }
 
     @Test
+    void getTotalBalanceSumsBalancesAcrossAllCustomerAccounts() {
+        createCheckingAccount("500.00");
+        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("125.50"));
+
+        BigDecimal totalBalance = accountService.getTotalBalance("CUST-001");
+
+        assertEquals(new BigDecimal("625.50"), totalBalance);
+    }
+
+    @Test
+    void getTotalBalanceReflectsBalanceChangingOperations() {
+        Account checking = createCheckingAccount("100.00");
+        Account savings = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+
+        accountService.depositIntoExistingAccount(checking.getId(), new BigDecimal("10.00"));
+        accountService.withdraw(savings.getId(), new BigDecimal("5.00"));
+
+        BigDecimal totalBalance = accountService.getTotalBalance("CUST-001");
+
+        assertEquals(new BigDecimal("145.00"), totalBalance);
+    }
+
+    @Test
+    void getTotalBalanceForMissingCustomerThrows() {
+        assertThrows(
+                CustomerNotFoundException.class,
+                () -> accountService.getTotalBalance("CUST-404")
+        );
+    }
+
+    @Test
     void depositIntoExistingAccountSucceeds() {
         Account account = createCheckingAccount("100.00");
 
@@ -324,6 +357,85 @@ class AccountServiceTest {
     }
 
     @Test
+    void freezeAccountRequiresValidAdminCredentials() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.freezeAccount("admin", "wrong", account.getId())
+        );
+    }
+
+    @Test
+    void freezeAndUnfreezeAccountUpdatesFrozenState() {
+        Account account = createCheckingAccount("100.00");
+
+        Account frozenAccount = accountService.freezeAccount("admin", "admin123", account.getId());
+        Account unfrozenAccount = accountService.unfreezeAccount("admin", "admin123", account.getId());
+
+        assertTrue(frozenAccount.isFrozen());
+        assertFalse(unfrozenAccount.isFrozen());
+        assertFalse(bank.findAccount(account.getId()).orElseThrow().isFrozen());
+    }
+
+    @Test
+    void depositIntoFrozenAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+        accountService.freezeAccount("admin", "admin123", account.getId());
+
+        assertThrows(
+                AccountFrozenException.class,
+                () -> accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("10.00"))
+        );
+    }
+
+    @Test
+    void withdrawFromFrozenAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+        accountService.freezeAccount("admin", "admin123", account.getId());
+
+        assertThrows(
+                AccountFrozenException.class,
+                () -> accountService.withdraw(account.getId(), new BigDecimal("10.00"))
+        );
+    }
+
+    @Test
+    void transferFromFrozenAccountThrows() {
+        Account source = createCheckingAccount("100.00");
+        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+        accountService.freezeAccount("admin", "admin123", source.getId());
+
+        assertThrows(
+                AccountFrozenException.class,
+                () -> accountService.transfer(source.getId(), target.getId(), new BigDecimal("10.00"))
+        );
+    }
+
+    @Test
+    void transferIntoFrozenAccountThrows() {
+        Account source = createCheckingAccount("100.00");
+        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+        accountService.freezeAccount("admin", "admin123", target.getId());
+
+        assertThrows(
+                AccountFrozenException.class,
+                () -> accountService.transfer(source.getId(), target.getId(), new BigDecimal("10.00"))
+        );
+    }
+
+    @Test
+    void collectFeeFromFrozenAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+        accountService.freezeAccount("admin", "admin123", account.getId());
+
+        assertThrows(
+                AccountFrozenException.class,
+                () -> accountService.collectFee("admin", "admin123", account.getId(), new BigDecimal("5.00"))
+        );
+    }
+
+    @Test
     void addInterestCreditsAccountAndRecordsHistory() {
         Account account = createCheckingAccount("100.00");
 
@@ -331,6 +443,174 @@ class AccountServiceTest {
 
         assertEquals(new BigDecimal("103.00"), updatedAccount.getBalance());
         assertEquals(TransactionType.INTEREST, lastTransaction(account.getId()).getType());
+    }
+
+    @Test
+    void setInterestRateForSavingsAccountSucceeds() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        Account updatedAccount = accountService.setInterestRate(
+                "admin",
+                "admin123",
+                account.getId(),
+                new BigDecimal("0.05")
+        );
+
+        assertEquals(new BigDecimal("0.05"), updatedAccount.getInterestRate());
+        assertEquals(
+                new BigDecimal("0.05"),
+                bank.findAccount(account.getId()).orElseThrow().getInterestRate()
+        );
+    }
+
+    @Test
+    void setInterestRateWithInvalidAdminCredentialsThrows() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.setInterestRate(
+                        "admin",
+                        "wrong-password",
+                        account.getId(),
+                        new BigDecimal("0.05")
+                )
+        );
+    }
+
+    @Test
+    void listCustomersWithValidAdminReturnsAllCustomers() {
+        List<Customer> customers = accountService.listCustomers("admin", "admin123");
+        assertEquals(1, customers.size());
+        assertEquals("CUST-001", customers.get(0).getId());
+    }
+
+    @Test
+    void listCustomersWithInvalidAdminThrows() {
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.listCustomers("admin", "wrongpassword")
+        );
+    }
+
+    @Test
+    void setInterestRateForCheckingAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> accountService.setInterestRate(
+                        "admin",
+                        "admin123",
+                        account.getId(),
+                        new BigDecimal("0.05")
+                )
+        );
+    }
+
+    @Test
+    void setInterestRateWithNegativeRateThrows() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> accountService.setInterestRate(
+                        "admin",
+                        "admin123",
+                        account.getId(),
+                        new BigDecimal("-0.01")
+                )
+        );
+    }
+
+    @Test
+    void getInterestRateForSavingsAccountSucceeds() {
+        Account account = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("100.00")
+        );
+
+        accountService.setInterestRate(
+                "admin",
+                "admin123",
+                account.getId(),
+                new BigDecimal("0.05")
+        );
+
+        BigDecimal interestRate = accountService.getInterestRate(account.getId());
+
+        assertEquals(new BigDecimal("0.05"), interestRate);
+    }
+
+    @Test
+    void getInterestRateForCheckingAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> accountService.getInterestRate(account.getId())
+        );
+    }
+
+    @Test
+    void getInterestRateForMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.getInterestRate("ACC-404")
+        );
+    }
+
+    @Test
+    void listAccountsForExistingCustomerReturnsAllAccounts() {
+        accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
+        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("50.00"));
+
+        List<Account> accounts = accountService.listAccounts("CUST-001");
+
+        assertEquals(2, accounts.size());
+    }
+
+    @Test
+    void listAccountsForMissingCustomerThrows() {
+        assertThrows(
+                CustomerNotFoundException.class,
+                () -> accountService.listAccounts("CUST-404")
+        );
+    }
+
+    @Test
+    void addInterestToFrozenAccountThrows() {
+        Account account = createCheckingAccount("100.00");
+        accountService.freezeAccount("admin", "admin123", account.getId());
+
+        assertThrows(
+                AccountFrozenException.class,
+                () -> accountService.addInterest("admin", "admin123", account.getId(), new BigDecimal("3.00"))
+        );
+    }
+
+    @Test
+    void operationsResumeAfterAccountIsUnfrozen() {
+        Account account = createCheckingAccount("100.00");
+        accountService.freezeAccount("admin", "admin123", account.getId());
+        accountService.unfreezeAccount("admin", "admin123", account.getId());
+
+        Account updatedAccount = accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("15.00"));
+
+        assertEquals(new BigDecimal("115.00"), updatedAccount.getBalance());
     }
 
     private Account createCheckingAccount(String openingBalance) {
