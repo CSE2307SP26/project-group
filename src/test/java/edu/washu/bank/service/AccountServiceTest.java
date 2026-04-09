@@ -26,13 +26,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AccountServiceTest {
+    private static final String CUSTOMER_PASSWORD = "pass123";
+
     private Bank bank;
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
         bank = new Bank();
-        bank.addCustomer(new Customer("CUST-001", "Alice"));
+        bank.addCustomer(new Customer("CUST-001", "Alice", CUSTOMER_PASSWORD));
         bank.addAdmin(new AdminUser("admin", "admin123"));
         accountService = new AccountService(bank);
     }
@@ -42,7 +44,8 @@ class AccountServiceTest {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.CHECKING,
-                new BigDecimal("250.00")
+                new BigDecimal("250.00"),
+                CUSTOMER_PASSWORD
         );
 
         assertEquals("CUST-001", account.getCustomerId());
@@ -56,7 +59,8 @@ class AccountServiceTest {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("50.00")
+                new BigDecimal("50.00"),
+                CUSTOMER_PASSWORD
         );
 
         Customer customer = bank.findCustomer("CUST-001").orElseThrow();
@@ -72,7 +76,15 @@ class AccountServiceTest {
     void createAdditionalAccountForMissingCustomerThrows() {
         assertThrows(
                 CustomerNotFoundException.class,
-                () -> accountService.createAdditionalAccount("CUST-404", AccountType.CHECKING, BigDecimal.ZERO)
+                () -> accountService.createAdditionalAccount("CUST-404", AccountType.CHECKING, BigDecimal.ZERO, "any")
+        );
+    }
+
+    @Test
+    void createAdditionalAccountWithWrongPasswordThrows() {
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, BigDecimal.ZERO, "wrong")
         );
     }
 
@@ -80,14 +92,14 @@ class AccountServiceTest {
     void createAdditionalAccountWithNegativeDepositThrows() {
         assertThrows(
                 InvalidOpeningDepositException.class,
-                () -> accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("-1.00"))
+                () -> accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("-1.00"), CUSTOMER_PASSWORD)
         );
     }
 
     @Test
     void createMultipleAccountsUsesDeterministicSequentialIds() {
-        Account first = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, BigDecimal.ZERO);
-        Account second = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, BigDecimal.ZERO);
+        Account first = accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, BigDecimal.ZERO, CUSTOMER_PASSWORD);
+        Account second = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, BigDecimal.ZERO, CUSTOMER_PASSWORD);
 
         assertEquals("ACC-0001", first.getId());
         assertEquals("ACC-0002", second.getId());
@@ -97,10 +109,20 @@ class AccountServiceTest {
     void withdrawWithSufficientFundsSucceeds() {
         Account account = createCheckingAccount("100.00");
 
-        Account updatedAccount = accountService.withdraw(account.getId(), new BigDecimal("30.00"));
+        Account updatedAccount = accountService.withdraw(account.getId(), new BigDecimal("30.00"), CUSTOMER_PASSWORD);
 
         assertEquals(new BigDecimal("70.00"), updatedAccount.getBalance());
         assertEquals(new BigDecimal("70.00"), bank.findAccount(account.getId()).orElseThrow().getBalance());
+    }
+
+    @Test
+    void withdrawWithWrongPasswordThrows() {
+        Account account = createCheckingAccount("100.00");
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.withdraw(account.getId(), new BigDecimal("30.00"), "wrong")
+        );
     }
 
     @Test
@@ -109,7 +131,7 @@ class AccountServiceTest {
 
         assertThrows(
                 InvalidTransferException.class,
-                () -> accountService.withdraw(account.getId(), new BigDecimal("60.00"))
+                () -> accountService.withdraw(account.getId(), new BigDecimal("60.00"), CUSTOMER_PASSWORD)
         );
     }
 
@@ -119,7 +141,7 @@ class AccountServiceTest {
 
         assertThrows(
                 InvalidTransferException.class,
-                () -> accountService.withdraw(account.getId(), new BigDecimal("-10.00"))
+                () -> accountService.withdraw(account.getId(), new BigDecimal("-10.00"), CUSTOMER_PASSWORD)
         );
     }
 
@@ -129,7 +151,7 @@ class AccountServiceTest {
 
         assertThrows(
                 InvalidTransferException.class,
-                () -> accountService.withdraw(account.getId(), null)
+                () -> accountService.withdraw(account.getId(), null, CUSTOMER_PASSWORD)
         );
     }
 
@@ -137,7 +159,7 @@ class AccountServiceTest {
     void withdrawFromNonexistentAccountThrows() {
         assertThrows(
                 AccountNotFoundException.class,
-                () -> accountService.withdraw("ACC-404", new BigDecimal("10.00"))
+                () -> accountService.withdraw("ACC-404", new BigDecimal("10.00"), CUSTOMER_PASSWORD)
         );
     }
 
@@ -235,7 +257,7 @@ class AccountServiceTest {
         Account account = createCheckingAccount("100.00");
 
         accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("25.00"));
-        accountService.withdraw(account.getId(), new BigDecimal("10.00"));
+        accountService.withdraw(account.getId(), new BigDecimal("10.00"), CUSTOMER_PASSWORD);
 
         List<Transaction> history = accountService.getTransactionHistory(account.getId());
 
@@ -257,7 +279,7 @@ class AccountServiceTest {
     void closeAccountRemovesItAndKeepsHistory() {
         Account account = createCheckingAccount("120.00");
 
-        BigDecimal cashOutAmount = accountService.closeAccount(account.getId());
+        BigDecimal cashOutAmount = accountService.closeAccount(account.getId(), CUSTOMER_PASSWORD);
 
         assertEquals(new BigDecimal("120.00"), cashOutAmount);
         assertTrue(bank.findAccount(account.getId()).isEmpty());
@@ -270,11 +292,21 @@ class AccountServiceTest {
     }
 
     @Test
+    void closeAccountWithWrongPasswordThrows() {
+        Account account = createCheckingAccount("120.00");
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.closeAccount(account.getId(), "wrong")
+        );
+    }
+
+    @Test
     void transferMovesMoneyAndRecordsBothSides() {
         Account source = createCheckingAccount("100.00");
-        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"), CUSTOMER_PASSWORD);
 
-        accountService.transfer(source.getId(), target.getId(), new BigDecimal("30.00"));
+        accountService.transfer(source.getId(), target.getId(), new BigDecimal("30.00"), CUSTOMER_PASSWORD);
 
         assertEquals(new BigDecimal("70.00"), bank.findAccount(source.getId()).orElseThrow().getBalance());
         assertEquals(new BigDecimal("70.00"), bank.findAccount(target.getId()).orElseThrow().getBalance());
@@ -289,7 +321,18 @@ class AccountServiceTest {
 
         assertThrows(
                 InvalidTransferException.class,
-                () -> accountService.transfer(account.getId(), account.getId(), BigDecimal.ONE)
+                () -> accountService.transfer(account.getId(), account.getId(), BigDecimal.ONE, CUSTOMER_PASSWORD)
+        );
+    }
+
+    @Test
+    void transferWithWrongPasswordThrows() {
+        Account source = createCheckingAccount("100.00");
+        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"), CUSTOMER_PASSWORD);
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.transfer(source.getId(), target.getId(), new BigDecimal("10.00"), "wrong")
         );
     }
 
@@ -574,7 +617,8 @@ class AccountServiceTest {
         return accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.CHECKING,
-                new BigDecimal(openingBalance)
+                new BigDecimal(openingBalance),
+                CUSTOMER_PASSWORD
         );
     }
 

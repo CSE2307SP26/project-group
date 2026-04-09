@@ -1,6 +1,7 @@
 package edu.washu.bank.cli;
 
 import edu.washu.bank.core.Bank;
+import edu.washu.bank.exception.AuthenticationException;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
 import edu.washu.bank.model.Transaction;
@@ -91,32 +92,33 @@ public class BankCli {
     }
 
     private void runCreateAccount(String[] args) {
-        if (args.length != 4) {
+        if (args.length != 5) {
             System.out.println("Invalid arguments for create-account.");
             printUsage();
             return;
         }
 
         String customerId = args[1];
+        String password = args[2];
 
         AccountType accountType;
         try {
-            accountType = AccountType.valueOf(args[2].toUpperCase());
+            accountType = AccountType.valueOf(args[3].toUpperCase());
         } catch (IllegalArgumentException ex) {
-            System.out.println("Invalid account type: " + args[2] + ". Use CHECKING or SAVINGS.");
+            System.out.println("Invalid account type: " + args[3] + ". Use CHECKING or SAVINGS.");
             return;
         }
 
         BigDecimal openingDeposit;
         try {
-            openingDeposit = new BigDecimal(args[3]);
+            openingDeposit = new BigDecimal(args[4]);
         } catch (NumberFormatException ex) {
-            System.out.println("Invalid opening deposit: " + args[3]);
+            System.out.println("Invalid opening deposit: " + args[4]);
             return;
         }
 
         try {
-            Account account = accountService.createAdditionalAccount(customerId, accountType, openingDeposit);
+            Account account = accountService.createAdditionalAccount(customerId, accountType, openingDeposit, password);
             store.saveFullState(bank);
             System.out.println(
                     "Created account " + account.getId()
@@ -230,24 +232,25 @@ public class BankCli {
     }
 
     private void runWithdraw(String[] args) {
-        if (args.length != 3) {
+        if (args.length != 4) {
             System.out.println("Invalid arguments for withdraw.");
             printUsage();
             return;
         }
 
         String accountId = args[1];
+        String password = args[2];
 
         BigDecimal amount;
         try {
-            amount = new BigDecimal(args[2]);
+            amount = new BigDecimal(args[3]);
         } catch (NumberFormatException ex) {
-            System.out.println("Invalid withdraw amount: " + args[2]);
+            System.out.println("Invalid withdraw amount: " + args[3]);
             return;
         }
 
         try {
-            Account updatedAccount = accountService.withdraw(accountId, amount);
+            Account updatedAccount = accountService.withdraw(accountId, amount, password);
             store.saveFullState(bank);
             System.out.println(
                     "Withdrew " + amount
@@ -262,15 +265,17 @@ public class BankCli {
     }
 
     private void runCloseAccount(String[] args) {
-        if (args.length != 2) {
+        if (args.length != 3) {
             System.out.println("Invalid arguments for close-account.");
             printUsage();
             return;
         }
 
         String accountId = args[1];
+        String password = args[2];
+
         try {
-            BigDecimal cashOutAmount = accountService.closeAccount(accountId);
+            BigDecimal cashOutAmount = accountService.closeAccount(accountId, password);
             store.saveFullState(bank);
             System.out.println("Closed account " + accountId + ". Cash-out amount: " + cashOutAmount);
         } catch (RuntimeException ex) {
@@ -281,11 +286,13 @@ public class BankCli {
     }
 
     private void runTransfer(String[] args) {
-        if (args.length != 4) {
+        if (args.length != 5) {
             System.out.println("Invalid arguments for transfer.");
             printUsage();
             return;
         }
+        
+        String password = args[4];
 
         BigDecimal amount;
         try {
@@ -296,7 +303,7 @@ public class BankCli {
         }
 
         try {
-            accountService.transfer(args[1], args[2], amount);
+            accountService.transfer(args[1], args[2], amount, password);
             store.saveFullState(bank);
             System.out.println("Transferred " + amount + " from " + args[1] + " to " + args[2] + ".");
         } catch (RuntimeException ex) {
@@ -520,13 +527,13 @@ public class BankCli {
                         + SqliteBankStore.SEEDED_ADMIN_PASSWORD
         );
         System.out.println("Usage:");
-        System.out.println("  create-account <customerId> <CHECKING|SAVINGS> <openingDeposit>");
+        System.out.println("  create-account <customerId> <password> <CHECKING|SAVINGS> <openingDeposit>");
         System.out.println("  transaction-history <accountId>");
         System.out.println("  deposit <accountId> <amount>");
-        System.out.println("  withdraw <accountId> <amount>");
+        System.out.println("  withdraw <accountId> <password> <amount>");
+        System.out.println("  close-account <accountId> <password>");
+        System.out.println("  transfer <fromAccountId> <toAccountId> <amount> <password>");
         System.out.println("  total-balance <customerId>");
-        System.out.println("  close-account <accountId>");
-        System.out.println("  transfer <fromAccountId> <toAccountId> <amount>");
         System.out.println("  collect-fee <adminUsername> <adminPassword> <accountId> <amount>");
         System.out.println("  add-interest <adminUsername> <adminPassword> <accountId> <amount>");
         System.out.println("  freeze-account <adminUsername> <adminPassword> <accountId>");
@@ -538,13 +545,13 @@ public class BankCli {
         System.out.println("  set-interest-rate <adminUsername> <adminPassword> <accountId> <rate>");
         System.out.println("  view-interest-rate <accountId>");
         System.out.println("Examples:");
-        System.out.println("  create-account CUST-001 CHECKING 100.00");
+        System.out.println("  create-account CUST-001 password123 CHECKING 100.00");
         System.out.println("  check-balance ACC-0001");
         System.out.println("  total-balance CUST-001");
         System.out.println("  deposit ACC-0001 50.00");
-        System.out.println("  withdraw ACC-0001 25.00");
+        System.out.println("  withdraw ACC-0001 password123 25.00");
         System.out.println("  transaction-history ACC-0001");
-        System.out.println("  transfer ACC-0001 ACC-0002 10.00");
+        System.out.println("  transfer ACC-0001 ACC-0002 10.00 password123");
         System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
         System.out.println("  add-interest admin admin123 ACC-0001 3.00");
         System.out.println("  set-interest-rate admin admin123 ACC-0001 0.05");
