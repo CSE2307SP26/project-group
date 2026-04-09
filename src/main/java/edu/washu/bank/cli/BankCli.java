@@ -38,6 +38,9 @@ public class BankCli {
             case "check-balance":
                 runCheckBalance(args);
                 return;
+            case "total-balance":
+                runTotalBalance(args);
+                return;
             case "transaction-history":
                 runTransactionHistory(args);
                 return;
@@ -126,6 +129,23 @@ public class BankCli {
         try {
             BigDecimal balance = accountService.getBalance(accountId);
             System.out.println("Account " + accountId + " balance: " + balance);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    private void runTotalBalance(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for total-balance.");
+            printUsage();
+            return;
+        }
+
+        String customerId = args[1];
+
+        try {
+            BigDecimal totalBalance = accountService.getTotalBalance(customerId);
+            System.out.println("Customer " + customerId + " total balance: " + totalBalance);
         } catch (RuntimeException ex) {
             System.out.println(ex.getMessage());
         }
@@ -392,6 +412,7 @@ public class BankCli {
         System.out.println("  transaction-history <accountId>");
         System.out.println("  deposit <accountId> <amount>");
         System.out.println("  withdraw <accountId> <amount>");
+        System.out.println("  total-balance <customerId>");
         System.out.println("  close-account <accountId>");
         System.out.println("  transfer <fromAccountId> <toAccountId> <amount>");
         System.out.println("  collect-fee <adminUsername> <adminPassword> <accountId> <amount>");
@@ -403,6 +424,7 @@ public class BankCli {
         System.out.println("Examples:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
         System.out.println("  check-balance ACC-0001");
+        System.out.println("  total-balance CUST-001");
         System.out.println("  deposit ACC-0001 50.00");
         System.out.println("  withdraw ACC-0001 25.00");
         System.out.println("  transaction-history ACC-0001");

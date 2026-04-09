@@ -84,6 +84,17 @@ public class AccountService {
         return requireAccount(accountId).getBalance();
     }
 
+    public BigDecimal getTotalBalance(String customerId) {
+        Customer customer = bank.findCustomer(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException(customerId));
+
+        BigDecimal totalBalance = BigDecimal.ZERO;
+        for (String accountId : customer.getAccountIds()) {
+            totalBalance = totalBalance.add(requireAccount(accountId).getBalance());
+        }
+        return totalBalance;
+    }
+
     public List<Transaction> getTransactionHistory(String accountId) {
         List<Transaction> history = bank.findTransactionsForAccount(accountId);
         if (history.isEmpty() && bank.findAccount(accountId).isEmpty()) {

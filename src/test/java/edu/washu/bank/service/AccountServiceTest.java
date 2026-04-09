@@ -159,6 +159,37 @@ class AccountServiceTest {
     }
 
     @Test
+    void getTotalBalanceSumsBalancesAcrossAllCustomerAccounts() {
+        createCheckingAccount("500.00");
+        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("125.50"));
+
+        BigDecimal totalBalance = accountService.getTotalBalance("CUST-001");
+
+        assertEquals(new BigDecimal("625.50"), totalBalance);
+    }
+
+    @Test
+    void getTotalBalanceReflectsBalanceChangingOperations() {
+        Account checking = createCheckingAccount("100.00");
+        Account savings = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+
+        accountService.depositIntoExistingAccount(checking.getId(), new BigDecimal("10.00"));
+        accountService.withdraw(savings.getId(), new BigDecimal("5.00"));
+
+        BigDecimal totalBalance = accountService.getTotalBalance("CUST-001");
+
+        assertEquals(new BigDecimal("145.00"), totalBalance);
+    }
+
+    @Test
+    void getTotalBalanceForMissingCustomerThrows() {
+        assertThrows(
+                CustomerNotFoundException.class,
+                () -> accountService.getTotalBalance("CUST-404")
+        );
+    }
+
+    @Test
     void depositIntoExistingAccountSucceeds() {
         Account account = createCheckingAccount("100.00");
 
