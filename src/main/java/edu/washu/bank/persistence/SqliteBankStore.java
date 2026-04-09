@@ -83,6 +83,8 @@ public final class SqliteBankStore {
                             + "password TEXT NOT NULL)"
             );
         }
+        ensureCustomersPasswordColumn(connection);
+        ensureAdminsPasswordColumn(connection);
         ensureAccountsInterestRateColumn(connection);
         ensureAccountsFrozenColumn(connection);
     }
@@ -181,6 +183,30 @@ public final class SqliteBankStore {
                     }
                 }
             }
+        }
+    }
+
+    private static void ensureCustomersPasswordColumn(Connection c) throws SQLException {
+        if (hasColumn(c, "customers", "password")) {
+            return;
+        }
+
+        try (Statement st = c.createStatement()) {
+            st.executeUpdate(
+                    "ALTER TABLE customers ADD COLUMN password TEXT NOT NULL DEFAULT 'password123'"
+            );
+        }
+    }
+
+    private static void ensureAdminsPasswordColumn(Connection c) throws SQLException {
+        if (hasColumn(c, "admins", "password")) {
+            return;
+        }
+
+        try (Statement st = c.createStatement()) {
+            st.executeUpdate(
+                    "ALTER TABLE admins ADD COLUMN password TEXT NOT NULL DEFAULT '" + SEEDED_ADMIN_PASSWORD + "'"
+            );
         }
     }
 

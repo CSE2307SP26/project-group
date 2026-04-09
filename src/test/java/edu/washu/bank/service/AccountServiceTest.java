@@ -183,7 +183,7 @@ class AccountServiceTest {
     @Test
     void getTotalBalanceSumsBalancesAcrossAllCustomerAccounts() {
         createCheckingAccount("500.00");
-        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("125.50"));
+        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("125.50"), CUSTOMER_PASSWORD);
 
         BigDecimal totalBalance = accountService.getTotalBalance("CUST-001");
 
@@ -193,10 +193,10 @@ class AccountServiceTest {
     @Test
     void getTotalBalanceReflectsBalanceChangingOperations() {
         Account checking = createCheckingAccount("100.00");
-        Account savings = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+        Account savings = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"), CUSTOMER_PASSWORD);
 
         accountService.depositIntoExistingAccount(checking.getId(), new BigDecimal("10.00"));
-        accountService.withdraw(savings.getId(), new BigDecimal("5.00"));
+        accountService.withdraw(savings.getId(), new BigDecimal("5.00"), CUSTOMER_PASSWORD);
 
         BigDecimal totalBalance = accountService.getTotalBalance("CUST-001");
 
@@ -396,31 +396,31 @@ class AccountServiceTest {
 
         assertThrows(
                 AccountFrozenException.class,
-                () -> accountService.withdraw(account.getId(), new BigDecimal("10.00"))
+                () -> accountService.withdraw(account.getId(), new BigDecimal("10.00"), CUSTOMER_PASSWORD)
         );
     }
 
     @Test
     void transferFromFrozenAccountThrows() {
         Account source = createCheckingAccount("100.00");
-        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"), CUSTOMER_PASSWORD);
         accountService.freezeAccount("admin", "admin123", source.getId());
 
         assertThrows(
                 AccountFrozenException.class,
-                () -> accountService.transfer(source.getId(), target.getId(), new BigDecimal("10.00"))
+                () -> accountService.transfer(source.getId(), target.getId(), new BigDecimal("10.00"), CUSTOMER_PASSWORD)
         );
     }
 
     @Test
     void transferIntoFrozenAccountThrows() {
         Account source = createCheckingAccount("100.00");
-        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"));
+        Account target = accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("40.00"), CUSTOMER_PASSWORD);
         accountService.freezeAccount("admin", "admin123", target.getId());
 
         assertThrows(
                 AccountFrozenException.class,
-                () -> accountService.transfer(source.getId(), target.getId(), new BigDecimal("10.00"))
+                () -> accountService.transfer(source.getId(), target.getId(), new BigDecimal("10.00"), CUSTOMER_PASSWORD)
         );
     }
 
@@ -450,7 +450,8 @@ class AccountServiceTest {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                CUSTOMER_PASSWORD
         );
 
         Account updatedAccount = accountService.setInterestRate(
@@ -472,7 +473,8 @@ class AccountServiceTest {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                CUSTOMER_PASSWORD
         );
 
         assertThrows(
@@ -521,7 +523,8 @@ class AccountServiceTest {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                CUSTOMER_PASSWORD
         );
 
         assertThrows(
@@ -540,7 +543,8 @@ class AccountServiceTest {
         Account account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                CUSTOMER_PASSWORD
         );
 
         accountService.setInterestRate(
@@ -575,8 +579,8 @@ class AccountServiceTest {
 
     @Test
     void listAccountsForExistingCustomerReturnsAllAccounts() {
-        accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"));
-        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("50.00"));
+        accountService.createAdditionalAccount("CUST-001", AccountType.CHECKING, new BigDecimal("100.00"), CUSTOMER_PASSWORD);
+        accountService.createAdditionalAccount("CUST-001", AccountType.SAVINGS, new BigDecimal("50.00"), CUSTOMER_PASSWORD);
 
         List<Account> accounts = accountService.listAccounts("CUST-001");
 

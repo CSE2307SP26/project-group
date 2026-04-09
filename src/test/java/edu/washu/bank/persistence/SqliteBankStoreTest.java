@@ -11,12 +11,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SqliteBankStoreTest {
+    private static final String SEEDED_CUSTOMER_PASSWORD = "password123";
 
     @Test
     void loadOrInitializeSeedsDemoCustomer(@TempDir Path tempDir) throws SQLException {
@@ -41,7 +43,8 @@ class SqliteBankStoreTest {
         var account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.CHECKING,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                SEEDED_CUSTOMER_PASSWORD
         );
         store.saveFullState(bank);
 
@@ -64,14 +67,16 @@ class SqliteBankStoreTest {
         var first = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.CHECKING,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                SEEDED_CUSTOMER_PASSWORD
         );
         var second = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("50.00")
+                new BigDecimal("50.00"),
+                SEEDED_CUSTOMER_PASSWORD
         );
-        accountService.transfer(first.getId(), second.getId(), new BigDecimal("10.00"));
+        accountService.transfer(first.getId(), second.getId(), new BigDecimal("10.00"), SEEDED_CUSTOMER_PASSWORD);
         accountService.collectFee(
                 SqliteBankStore.SEEDED_ADMIN_USERNAME,
                 SqliteBankStore.SEEDED_ADMIN_PASSWORD,
@@ -105,7 +110,8 @@ class SqliteBankStoreTest {
         var account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                BigDecimal.TEN
+                BigDecimal.TEN,
+                SEEDED_CUSTOMER_PASSWORD
         );
         store.saveFullState(bank);
 
@@ -120,6 +126,49 @@ class SqliteBankStoreTest {
     }
 
     @Test
+    void loadOrInitializeMigratesLegacyPasswordlessSchema(@TempDir Path tempDir) throws SQLException {
+        Path db = tempDir.resolve("legacy-bank.db");
+        SqliteBankStore store = new SqliteBankStore(db);
+
+        try (Connection connection = store.openConnection();
+             var statement = connection.createStatement()) {
+            statement.executeUpdate("CREATE TABLE bank_meta (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL)");
+            statement.executeUpdate("INSERT INTO bank_meta (key, value) VALUES ('account_sequence', '1')");
+            statement.executeUpdate("CREATE TABLE customers (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL)");
+            statement.executeUpdate("INSERT INTO customers (id, name) VALUES ('CUST-001', 'Legacy User')");
+            statement.executeUpdate(
+                    "CREATE TABLE accounts ("
+                            + "id TEXT PRIMARY KEY NOT NULL,"
+                            + "customer_id TEXT NOT NULL,"
+                            + "type TEXT NOT NULL,"
+                            + "balance TEXT NOT NULL)"
+            );
+            statement.executeUpdate(
+                    "CREATE TABLE transactions ("
+                            + "id TEXT PRIMARY KEY NOT NULL,"
+                            + "account_id TEXT NOT NULL,"
+                            + "type TEXT NOT NULL,"
+                            + "amount TEXT NOT NULL,"
+                            + "balance_after TEXT NOT NULL,"
+                            + "related_account_id TEXT,"
+                            + "description TEXT NOT NULL)"
+            );
+            statement.executeUpdate("CREATE TABLE admins (username TEXT PRIMARY KEY NOT NULL)");
+            statement.executeUpdate("INSERT INTO admins (username) VALUES ('admin')");
+        }
+
+        Bank bank = store.loadOrInitialize();
+
+        assertEquals(1, bank.getAccountSequence());
+        assertEquals(1, bank.getTransactionSequence());
+        assertEquals(SEEDED_CUSTOMER_PASSWORD, bank.findCustomer("CUST-001").orElseThrow().getPassword());
+        assertEquals(
+                SqliteBankStore.SEEDED_ADMIN_PASSWORD,
+                bank.findAdmin(SqliteBankStore.SEEDED_ADMIN_USERNAME).orElseThrow().getPassword()
+        );
+    }
+
+    @Test
     void saveAndReloadPersistsSavingsAccountInterestRate(@TempDir Path tempDir) throws SQLException {
         Path db = tempDir.resolve("bank.db");
         SqliteBankStore store = new SqliteBankStore(db);
@@ -129,7 +178,8 @@ class SqliteBankStoreTest {
         var account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                SEEDED_CUSTOMER_PASSWORD
         );
 
         accountService.setInterestRate(
@@ -157,7 +207,8 @@ class SqliteBankStoreTest {
         var account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.SAVINGS,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                SEEDED_CUSTOMER_PASSWORD
         );
 
         accountService.setInterestRate(
@@ -184,7 +235,8 @@ class SqliteBankStoreTest {
         var account = accountService.createAdditionalAccount(
                 "CUST-001",
                 AccountType.CHECKING,
-                new BigDecimal("100.00")
+                new BigDecimal("100.00"),
+                SEEDED_CUSTOMER_PASSWORD
         );
         accountService.freezeAccount(
                 SqliteBankStore.SEEDED_ADMIN_USERNAME,
