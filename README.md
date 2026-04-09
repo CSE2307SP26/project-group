@@ -15,6 +15,8 @@
 11. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
 12. A bank customer should be able to list all of their accounts. (Bobby)
 13. A bank administrator should be able to view all customers in the bank. (Bobby)
+14. A bank customer should be able to set password for their account (Rosie)
+
 ---
 
 # What commands are needed to compile and run your code from the command line?
@@ -24,13 +26,13 @@ From the project root:
 Run the app with the required script:
 
 * `./runApp.sh help`
-* `./runApp.sh create-account CUST-001 CHECKING 100.00`
+* `./runApp.sh create-account CUST-001 123 CHECKING 100.00`
 * `./runApp.sh deposit ACC-0001 50.00` (use the account id printed by `create-account`)
-* `./runApp.sh withdraw ACC-0001 25.00` (use the account id printed by `create-account`)
+* `./runApp.sh withdraw ACC-0001 123 25.00 123` (use the account id printed by `create-account`)
 * `./runApp.sh check-balance ACC-0001` (use the account id printed by `create-account`)
 * `./runApp.sh transaction-history ACC-0001`
-* `./runApp.sh transfer ACC-0001 ACC-0002 10.00`
-* `./runApp.sh close-account ACC-0001`
+* `./runApp.sh transfer ACC-0001 ACC-0002 10.00 123`
+* `./runApp.sh close-account ACC-0001 123`
 * `./runApp.sh collect-fee admin admin123 ACC-0001 5.00`
 * `./runApp.sh add-interest admin admin123 ACC-0001 3.00`
 * `./runApp.sh clear-data` (wipes the local database and re-seeds the demo customer `CUST-001`)

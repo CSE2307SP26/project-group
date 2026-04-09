@@ -24,13 +24,16 @@ public class AccountService {
         this.bank = Objects.requireNonNull(bank, "bank must not be null");
     }
 
-    public Account createAdditionalAccount(String customerId, AccountType accountType, BigDecimal openingDeposit) {
+    public Account createAdditionalAccount(String customerId, AccountType accountType, BigDecimal openingDeposit, String password) {
         if (openingDeposit == null || openingDeposit.compareTo(BigDecimal.ZERO) < 0) {
             throw new InvalidOpeningDepositException("Opening deposit must be at least 0");
         }
 
         Customer customer = bank.findCustomer(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException(customerId));
+        if (!customer.getPassword().equals(password)) {
+            throw new AuthenticationException("Invalid customer credentials.");
+        }
 
         String accountId = bank.nextAccountId();
         Account account = new Account(accountId, customer.getId(), accountType, openingDeposit);
@@ -62,7 +65,9 @@ public class AccountService {
         return updatedAccount;
     }
 
-    public Account withdraw(String accountId, BigDecimal amount) {
+    public Account withdraw(String accountId, BigDecimal amount, String password) {
+        authenticateCustomer(accountId, password);
+
         Account account = requireAccount(accountId);
         Account updatedAccount = account.withdraw(amount);
         bank.saveAccount(updatedAccount);
@@ -89,7 +94,9 @@ public class AccountService {
         return history;
     }
 
-    public BigDecimal closeAccount(String accountId) {
+    public BigDecimal closeAccount(String accountId, String password) {
+        authenticateCustomer(accountId, password);
+
         Account account = requireAccount(accountId);
         BigDecimal closingBalance = account.getBalance();
         recordTransaction(
@@ -105,7 +112,9 @@ public class AccountService {
         return closingBalance;
     }
 
-    public void transfer(String fromAccountId, String toAccountId, BigDecimal amount) {
+    public void transfer(String fromAccountId, String toAccountId, BigDecimal amount, String password) {
+        authenticateCustomer(fromAccountId, password);
+        
         if (Objects.equals(fromAccountId, toAccountId)) {
             throw new InvalidTransferException("Cannot transfer to the same account.");
         }
@@ -172,6 +181,15 @@ public class AccountService {
                 .orElseThrow(() -> new AuthenticationException("Invalid admin credentials."));
         if (!adminUser.getPassword().equals(password)) {
             throw new AuthenticationException("Invalid admin credentials.");
+        }
+    }
+
+    private void authenticateCustomer(String accountId, String password) {
+        Account account = requireAccount(accountId);
+        Customer customer = bank.findCustomer(account.getCustomerId())
+                .orElseThrow(() -> new CustomerNotFoundException(account.getCustomerId()));
+        if (!customer.getPassword().equals(password)) {
+            throw new AuthenticationException("Invalid customer credentials.");
         }
     }
 
