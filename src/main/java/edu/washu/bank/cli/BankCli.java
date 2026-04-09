@@ -38,6 +38,9 @@ public class BankCli {
             case "check-balance":
                 runCheckBalance(args);
                 return;
+            case "total-balance":
+                runTotalBalance(args);
+                return;
             case "transaction-history":
                 runTransactionHistory(args);
                 return;
@@ -58,6 +61,12 @@ public class BankCli {
                 return;
             case "add-interest":
                 runAddInterest(args);
+                return;
+            case "freeze-account":
+                runFreezeAccount(args);
+                return;
+            case "unfreeze-account":
+                runUnfreezeAccount(args);
                 return;
             case "clear-data":
                 runClearData();
@@ -123,6 +132,23 @@ public class BankCli {
         try {
             BigDecimal balance = accountService.getBalance(accountId);
             System.out.println("Account " + accountId + " balance: " + balance);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    private void runTotalBalance(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for total-balance.");
+            printUsage();
+            return;
+        }
+
+        String customerId = args[1];
+
+        try {
+            BigDecimal totalBalance = accountService.getTotalBalance(customerId);
+            System.out.println("Customer " + customerId + " total balance: " + totalBalance);
         } catch (RuntimeException ex) {
             System.out.println(ex.getMessage());
         }
@@ -328,6 +354,42 @@ public class BankCli {
         }
     }
 
+    private void runFreezeAccount(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for freeze-account.");
+            printUsage();
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.freezeAccount(args[1], args[2], args[3]);
+            store.saveFullState(bank);
+            System.out.println("Froze account " + updatedAccount.getId() + ".");
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void runUnfreezeAccount(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for unfreeze-account.");
+            printUsage();
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.unfreezeAccount(args[1], args[2], args[3]);
+            store.saveFullState(bank);
+            System.out.println("Unfroze account " + updatedAccount.getId() + ".");
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     private void runListAccounts(String[] args) {
         if (args.length != 2) {
             System.out.println("Invalid arguments for list-accounts.");
@@ -380,15 +442,20 @@ public class BankCli {
         System.out.println("  transaction-history <accountId>");
         System.out.println("  deposit <accountId> <amount>");
         System.out.println("  withdraw <accountId> <amount>");
+        System.out.println("  total-balance <customerId>");
         System.out.println("  close-account <accountId>");
         System.out.println("  transfer <fromAccountId> <toAccountId> <amount>");
         System.out.println("  collect-fee <adminUsername> <adminPassword> <accountId> <amount>");
         System.out.println("  add-interest <adminUsername> <adminPassword> <accountId> <amount>");
+        System.out.println("  freeze-account <adminUsername> <adminPassword> <accountId>");
+        System.out.println("  unfreeze-account <adminUsername> <adminPassword> <accountId>");
+        System.out.println("  list-accounts <customerId>");
         System.out.println("  check-balance <accountId>");
         System.out.println("  clear-data");
         System.out.println("Examples:");
         System.out.println("  create-account CUST-001 CHECKING 100.00");
         System.out.println("  check-balance ACC-0001");
+        System.out.println("  total-balance CUST-001");
         System.out.println("  deposit ACC-0001 50.00");
         System.out.println("  withdraw ACC-0001 25.00");
         System.out.println("  transaction-history ACC-0001");
@@ -396,5 +463,7 @@ public class BankCli {
         System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
         System.out.println("  add-interest admin admin123 ACC-0001 3.00");
         System.out.println("  list-accounts <customerId>");
+        System.out.println("  freeze-account admin admin123 ACC-0001");
+        System.out.println("  unfreeze-account admin admin123 ACC-0001");
     }
 }
