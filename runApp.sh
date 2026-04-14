@@ -172,7 +172,10 @@ fi
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
-mapfile -d '' JAVA_FILES < <(find "$SRC_DIR" -name "*.java" -print0)
+JAVA_FILES=()
+while IFS= read -r -d '' file; do
+    JAVA_FILES+=("$file")
+done < <(find "$SRC_DIR" -name "*.java" -print0)
 
 if [[ ${#JAVA_FILES[@]} -eq 0 ]]; then
     echo "Error: no Java source files found under $SRC_DIR" >&2

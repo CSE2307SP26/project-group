@@ -34,7 +34,11 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
         bank = new Bank();
+<<<<<<< UI-reconstruct
+        bank.addCustomer(new Customer("CUST-001", "Alice", "password"));
+=======
         bank.addCustomer(new Customer("CUST-001", "Alice", CUSTOMER_PASSWORD));
+>>>>>>> main
         bank.addAdmin(new AdminUser("admin", "admin123"));
         accountService = new AccountService(bank);
     }

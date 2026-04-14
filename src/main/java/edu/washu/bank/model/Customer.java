@@ -8,6 +8,7 @@ import java.util.Objects;
 public class Customer {
     private final String id;
     private final String name;
+    private final String password;
     private final List<String> accountIds = new ArrayList<>();
     private final String password;
 
@@ -27,6 +28,10 @@ public class Customer {
 
     public String getName() {
         return name;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public List<String> getAccountIds() {
