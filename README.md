@@ -9,43 +9,35 @@
 
 ---
 
-# Features planned to implement this iteration (iteration 2)
+# Features planned to implement in iteration 3:
+1. Reconstruct the user interface into a text-based user interface.
 
-10. A bank administrator should be able to freeze and unfreeze an account to block deposits and withdrawals. (Daniel)
-11. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
-12. A bank customer should be able to list all of their accounts. (Bobby)
-13. A bank administrator should be able to view all customers in the bank. (Bobby)
----
 
-# What commands are needed to compile and run your code from the command line?
+# Getting Started
 
 From the project root:
 
 Run the app with the required script:
 
-* `./runApp.sh help`
-* `./runApp.sh create-account CUST-001 CHECKING 100.00`
-* `./runApp.sh deposit ACC-0001 50.00` (use the account id printed by `create-account`)
-* `./runApp.sh withdraw ACC-0001 25.00` (use the account id printed by `create-account`)
-* `./runApp.sh check-balance ACC-0001` (use the account id printed by `create-account`)
-* `./runApp.sh transaction-history ACC-0001`
-* `./runApp.sh transfer ACC-0001 ACC-0002 10.00`
-* `./runApp.sh close-account ACC-0001`
-* `./runApp.sh collect-fee admin admin123 ACC-0001 5.00`
-* `./runApp.sh add-interest admin admin123 ACC-0001 3.00`
-* `./runApp.sh clear-data` (wipes the local database and re-seeds the demo customer `CUST-001`)
-* `./runApp.sh list-accounts CUST-001`
-* `./runApp.sh list-customers admin admin123`
+* `./runApp.sh`
 
-Notes:
+## Notes:
 
 * `runApp.sh` compiles the Java sources and runs the app without requiring Gradle to launch it.
 * On the first run, the script downloads `sqlite-jdbc-3.47.2.0.jar` into `lib/`.
 * Windows users should run the script from a Bash-compatible shell such as Git Bash or WSL.
 * Gradle is still used for tests: `./gradlew test` on macOS/Linux or `.\gradlew.bat test` in PowerShell on Windows.
-* Reliable invocation:
-  * In Git Bash or WSL: `./runApp.sh help`
-  * From PowerShell: `bash ./runApp.sh help`
+
+## Initial customer and admin account
+### Customer
+ID: CUST-001
+Name: Demo User
+Password: password
+
+### Admin
+Username: admin
+Password: admin123
+
 
 **Persistence:** Account data is stored in a local SQLite file named `bank.db` in the working directory (created on first run). Separate `./runApp.sh` invocations share this file, so balances and transaction history survive between commands. To use a different path: add `-Dbank.db.file=/absolute/path/to/bank.db` to the Java process before launching the app.
 
@@ -79,6 +71,14 @@ Implemented features:
 8. A bank administrator should be able to collect fees from existing accounts when necessary. (Rosie)
 9. A bank administrator should be able to add an interest payment to an existing account when necessary. (Daniel)
 
+---
+
+# Features planned to implement this iteration (iteration 2)
+
+10. A bank administrator should be able to freeze and unfreeze an account to block deposits and withdrawals. (Daniel)
+11. A bank customer should be able to view the total balance across all of their accounts. (Daniel)
+12. A bank customer should be able to list all of their accounts. (Bobby)
+13. A bank administrator should be able to view all customers in the bank. (Bobby)
 ---
 
 # Is there anything that you implemented but doesn't currently work?

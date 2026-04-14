@@ -22,6 +22,6 @@ public class App {
         }
 
         AccountService accountService = new AccountService(bank);
-        new BankCli(store, bank, accountService, dbPath).run(args);
+        new BankCli(store, bank, accountService, dbPath).run();
     }
 }

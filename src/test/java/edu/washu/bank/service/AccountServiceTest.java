@@ -30,7 +30,7 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
         bank = new Bank();
-        bank.addCustomer(new Customer("CUST-001", "Alice"));
+        bank.addCustomer(new Customer("CUST-001", "Alice", "password"));
         bank.addAdmin(new AdminUser("admin", "admin123"));
         accountService = new AccountService(bank);
     }

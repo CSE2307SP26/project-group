@@ -8,11 +8,13 @@ import java.util.Objects;
 public class Customer {
     private final String id;
     private final String name;
+    private final String password;
     private final List<String> accountIds = new ArrayList<>();
 
-    public Customer(String id, String name) {
+    public Customer(String id, String name, String password) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.name = Objects.requireNonNull(name, "name must not be null");
+        this.password = Objects.requireNonNull(password, "password must not be null");
     }
 
     public String getId() {
@@ -21,6 +23,10 @@ public class Customer {
 
     public String getName() {
         return name;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public List<String> getAccountIds() {

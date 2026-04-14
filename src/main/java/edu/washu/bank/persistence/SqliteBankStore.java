@@ -54,8 +54,15 @@ public final class SqliteBankStore {
             st.execute(
                     "CREATE TABLE IF NOT EXISTS customers ("
                             + "id TEXT PRIMARY KEY NOT NULL,"
-                            + "name TEXT NOT NULL)"
+                            + "name TEXT NOT NULL,"
+                            + "password TEXT NOT NULL DEFAULT 'password')"
             );
+            // Migrate existing databases that lack the password column
+            try {
+                st.execute("ALTER TABLE customers ADD COLUMN password TEXT NOT NULL DEFAULT 'password'");
+            } catch (SQLException ignored) {
+                // Column already exists — safe to ignore
+            }
             st.execute(
                     "CREATE TABLE IF NOT EXISTS accounts ("
                             + "id TEXT PRIMARY KEY NOT NULL,"
@@ -126,9 +133,10 @@ public final class SqliteBankStore {
             ps.executeUpdate();
         }
         try (PreparedStatement ps = c.prepareStatement(
-                "INSERT INTO customers (id, name) VALUES (?, ?)")) {
+                "INSERT INTO customers (id, name, password) VALUES (?, ?, ?)")) {
             ps.setString(1, "CUST-001");
             ps.setString(2, "Demo User");
+            ps.setString(3, "password");
             ps.executeUpdate();
         }
         try (PreparedStatement ps = c.prepareStatement(
@@ -204,10 +212,10 @@ public final class SqliteBankStore {
             }
         }
 
-        try (PreparedStatement ps = c.prepareStatement("SELECT id, name FROM customers ORDER BY id")) {
+        try (PreparedStatement ps = c.prepareStatement("SELECT id, name, password FROM customers ORDER BY id")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    bank.addCustomer(new Customer(rs.getString("id"), rs.getString("name")));
+                    bank.addCustomer(new Customer(rs.getString("id"), rs.getString("name"), rs.getString("password")));
                 }
             }
         }
@@ -279,10 +287,11 @@ public final class SqliteBankStore {
                     ps.setString(2, Integer.toString(bank.getTransactionSequence()));
                     ps.executeUpdate();
                 }
-                try (PreparedStatement ps = c.prepareStatement("INSERT INTO customers (id, name) VALUES (?, ?)")) {
+                try (PreparedStatement ps = c.prepareStatement("INSERT INTO customers (id, name, password) VALUES (?, ?, ?)")) {
                     for (Customer customer : bank.getCustomersSnapshot()) {
                         ps.setString(1, customer.getId());
                         ps.setString(2, customer.getName());
+                        ps.setString(3, customer.getPassword());
                         ps.executeUpdate();
                     }
                 }
