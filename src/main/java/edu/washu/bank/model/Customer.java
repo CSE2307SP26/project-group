@@ -10,6 +10,7 @@ public class Customer {
     private final String name;
     private final String password;
     private final List<String> accountIds = new ArrayList<>();
+    private final String password;
 
     public Customer(String id, String name, String password) {
         this.id = Objects.requireNonNull(id, "id must not be null");
@@ -19,6 +20,10 @@ public class Customer {
 
     public String getId() {
         return id;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public String getName() {

@@ -12,6 +12,7 @@ SQLITE_JDBC_URL="https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/${SQLITE_
 USE_WINDOWS_JAVA=false
 JAVAC_BIN=""
 JAVA_BIN=""
+JAVA_RUNTIME_OPTS=()
 
 detect_java_tools() {
     if command -v javac >/dev/null 2>&1 && command -v java >/dev/null 2>&1; then
@@ -129,6 +130,21 @@ build_classpath() {
     esac
 }
 
+configure_runtime_options() {
+    if [[ -z "${BANK_DB_FILE:-}" ]]; then
+        return
+    fi
+
+    local db_file="$BANK_DB_FILE"
+    if [[ "$USE_WINDOWS_JAVA" == true ]] \
+        && command -v wslpath >/dev/null 2>&1 \
+        && [[ ! "$db_file" =~ ^[A-Za-z]:[\\/] ]]; then
+        db_file="$(wslpath -m "$db_file")"
+    fi
+
+    JAVA_RUNTIME_OPTS+=("-Dbank.db.file=$db_file")
+}
+
 write_source_list() {
     local source_list_file="$BUILD_DIR/java_sources.txt"
 
@@ -145,6 +161,7 @@ write_source_list() {
 }
 
 detect_java_tools
+configure_runtime_options
 mkdir -p "$LIB_DIR"
 
 if ! is_valid_jar; then
@@ -179,4 +196,4 @@ fi
 "$JAVAC_BIN" -cp "$COMPILE_CLASSPATH" -d "$OUTPUT_DIR" @"$SOURCE_LIST_FILE"
 
 echo "Running app ..."
-"$JAVA_BIN" -cp "$(build_classpath)" edu.washu.bank.App "$@"
+"$JAVA_BIN" "${JAVA_RUNTIME_OPTS[@]}" -cp "$(build_classpath)" edu.washu.bank.App "$@"

@@ -1,12 +1,14 @@
 package edu.washu.bank.cli;
 
 import edu.washu.bank.core.Bank;
+import edu.washu.bank.exception.AuthenticationException;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
 import edu.washu.bank.model.Customer;
 import edu.washu.bank.model.Transaction;
 import edu.washu.bank.persistence.SqliteBankStore;
 import edu.washu.bank.service.AccountService;
+import edu.washu.bank.model.Customer;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -35,6 +37,7 @@ public class BankCli {
         }
     }
 
+<<<<<<< UI-reconstruct
     // ─── Login ────────────────────────────────────────────────────────────────
 
     private void loginMenu() {
@@ -119,6 +122,104 @@ public class BankCli {
                     System.out.println("Logged out.");
                     return;
             }
+=======
+        switch (args[0].toLowerCase()) {
+            case "create-account":
+                runCreateAccount(args);
+                return;
+            case "check-balance":
+                runCheckBalance(args);
+                return;
+            case "total-balance":
+                runTotalBalance(args);
+                return;
+            case "transaction-history":
+                runTransactionHistory(args);
+                return;
+            case "deposit":
+                runDeposit(args);
+                return;
+            case "withdraw":
+                runWithdraw(args);
+                return;
+            case "close-account":
+                runCloseAccount(args);
+                return;
+            case "transfer":
+                runTransfer(args);
+                return;
+            case "collect-fee":
+                runCollectFee(args);
+                return;
+            case "add-interest":
+                runAddInterest(args);
+                return;
+            case "view-interest-rate":
+                runViewInterestRate(args);
+                return;
+            case "freeze-account":
+                runFreezeAccount(args);
+                return;
+            case "unfreeze-account":
+                runUnfreezeAccount(args);
+                return;
+            case "clear-data":
+                runClearData();
+                return;
+            case "set-interest-rate":
+                runSetInterestRate(args);
+                return;
+            case "list-customers":
+                runListCustomers(args);
+                return;
+            case "list-accounts":
+                runListAccounts(args);
+                return;
+            default:
+                System.out.println("Unknown command: " + args[0]);
+                printUsage();
+        }
+    }
+
+    private void runCreateAccount(String[] args) {
+        if (args.length != 5) {
+            System.out.println("Invalid arguments for create-account.");
+            printUsage();
+            return;
+        }
+
+        String customerId = args[1];
+        String password = args[2];
+
+        AccountType accountType;
+        try {
+            accountType = AccountType.valueOf(args[3].toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            System.out.println("Invalid account type: " + args[3] + ". Use CHECKING or SAVINGS.");
+            return;
+        }
+
+        BigDecimal openingDeposit;
+        try {
+            openingDeposit = new BigDecimal(args[4]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid opening deposit: " + args[4]);
+            return;
+        }
+
+        try {
+            Account account = accountService.createAdditionalAccount(customerId, accountType, openingDeposit, password);
+            store.saveFullState(bank);
+            System.out.println(
+                    "Created account " + account.getId()
+                            + " (" + account.getType() + ") for customer " + account.getCustomerId()
+                            + " with opening balance " + account.getBalance()
+            );
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+>>>>>>> main
         }
     }
 
@@ -164,6 +265,7 @@ public class BankCli {
         }
     }
 
+<<<<<<< UI-reconstruct
     private void deposit(Customer customer) {
         String accountId = promptAccountId(customer);
         if (accountId == null) return;
@@ -171,6 +273,31 @@ public class BankCli {
         System.out.print("Amount to deposit: ");
         BigDecimal amount = readAmount();
         if (amount == null) return;
+=======
+    private void runTotalBalance(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for total-balance.");
+            printUsage();
+            return;
+        }
+
+        String customerId = args[1];
+
+        try {
+            BigDecimal totalBalance = accountService.getTotalBalance(customerId);
+            System.out.println("Customer " + customerId + " total balance: " + totalBalance);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    private void runTransactionHistory(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for transaction-history.");
+            printUsage();
+            return;
+        }
+>>>>>>> main
 
         try {
             Account updated = accountService.depositIntoExistingAccount(accountId, amount);
@@ -202,6 +329,7 @@ public class BankCli {
         }
     }
 
+<<<<<<< UI-reconstruct
     private void transfer(Customer customer) {
         System.out.println("Transfer FROM which account?");
         String fromId = promptAccountId(customer);
@@ -217,6 +345,28 @@ public class BankCli {
 
         try {
             accountService.transfer(fromId, toId, amount);
+=======
+    private void runWithdraw(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for withdraw.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+        String password = args[2];
+
+        BigDecimal amount;
+        try {
+            amount = new BigDecimal(args[3]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid withdraw amount: " + args[3]);
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.withdraw(accountId, amount, password);
+>>>>>>> main
             store.saveFullState(bank);
             System.out.println("Transferred " + amount + " from " + fromId + " to " + toId + ".");
         } catch (RuntimeException ex) {
@@ -226,6 +376,7 @@ public class BankCli {
         }
     }
 
+<<<<<<< UI-reconstruct
     private void transactionHistory(Customer customer) {
         String accountId = promptAccountId(customer);
         if (accountId == null) return;
@@ -244,14 +395,41 @@ public class BankCli {
                 System.out.printf("  %-12s  %-16s  amount: %-10s  balance after: %s%s%n",
                         t.getId(), t.getType(), t.getAmount(), t.getBalanceAfter(), related);
             }
+=======
+    private void runCloseAccount(String[] args) {
+        if (args.length != 3) {
+            System.out.println("Invalid arguments for close-account.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+        String password = args[2];
+
+        try {
+            BigDecimal cashOutAmount = accountService.closeAccount(accountId, password);
+            store.saveFullState(bank);
+            System.out.println("Closed account " + accountId + ". Cash-out amount: " + cashOutAmount);
+>>>>>>> main
         } catch (RuntimeException ex) {
             System.out.println("Error: " + ex.getMessage());
         }
     }
 
+<<<<<<< UI-reconstruct
     private void closeAccount(Customer customer) {
         String accountId = promptAccountId(customer);
         if (accountId == null) return;
+=======
+    private void runTransfer(String[] args) {
+        if (args.length != 5) {
+            System.out.println("Invalid arguments for transfer.");
+            printUsage();
+            return;
+        }
+        
+        String password = args[4];
+>>>>>>> main
 
         System.out.print("Are you sure you want to close account " + accountId + "? (yes/no): ");
         String confirm = scanner.nextLine().trim();
@@ -261,7 +439,11 @@ public class BankCli {
         }
 
         try {
+<<<<<<< UI-reconstruct
             BigDecimal cashOut = accountService.closeAccount(accountId);
+=======
+            accountService.transfer(args[1], args[2], amount, password);
+>>>>>>> main
             store.saveFullState(bank);
             System.out.println("Account " + accountId + " closed. Cash-out amount: " + cashOut + ".");
         } catch (RuntimeException ex) {
@@ -368,6 +550,7 @@ public class BankCli {
         }
     }
 
+<<<<<<< UI-reconstruct
     private void adminClearData() {
         System.out.print("This will reset ALL data. Type CONFIRM to proceed: ");
         String confirm = scanner.nextLine().trim();
@@ -375,6 +558,118 @@ public class BankCli {
             System.out.println("Cancelled.");
             return;
         }
+=======
+    private void runSetInterestRate(String[] args) {
+        if (args.length != 5) {
+            System.out.println("Invalid arguments for set-interest-rate.");
+            printUsage();
+            return;
+        }
+
+        BigDecimal interestRate;
+        try {
+            interestRate = new BigDecimal(args[4]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid interest rate: " + args[4]);
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.setInterestRate(args[1], args[2], args[3], interestRate);
+            store.saveFullState(bank);
+            System.out.println(
+                    "Set interest rate for account " + updatedAccount.getId()
+                            + " to " + updatedAccount.getInterestRate()
+            );
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void runFreezeAccount(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for freeze-account.");
+            printUsage();
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.freezeAccount(args[1], args[2], args[3]);
+            store.saveFullState(bank);
+            System.out.println("Froze account " + updatedAccount.getId() + ".");
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void runUnfreezeAccount(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Invalid arguments for unfreeze-account.");
+            printUsage();
+            return;
+        }
+
+        try {
+            Account updatedAccount = accountService.unfreezeAccount(args[1], args[2], args[3]);
+            store.saveFullState(bank);
+            System.out.println("Unfroze account " + updatedAccount.getId() + ".");
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void runViewInterestRate(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for view-interest-rate.");
+            printUsage();
+            return;
+        }
+
+        String accountId = args[1];
+
+        try {
+            BigDecimal interestRate = accountService.getInterestRate(accountId);
+            System.out.println("Account " + accountId + " interest rate: " + interestRate);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    private void runListAccounts(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Invalid arguments for list-accounts.");
+            printUsage();
+            return;
+        }
+
+        String customerId = args[1];
+        try {
+            List<Account> accounts = accountService.listAccounts(customerId);
+            if (accounts.isEmpty()) {
+                System.out.println("No accounts found for customer " + customerId);
+                return;
+            }
+            System.out.println("Accounts for customer " + customerId + ":");
+            for (Account account : accounts) {
+                System.out.println(
+                        "  " + account.getId()
+                                + " | " + account.getType()
+                                + " | balance: " + account.getBalance()
+                );
+            }
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    private void runClearData() {
+>>>>>>> main
         try {
             store.clearAllAndReseed();
             System.out.println("Data cleared and reseeded. Please restart the app.");
@@ -384,6 +679,7 @@ public class BankCli {
         }
     }
 
+<<<<<<< UI-reconstruct
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private int getUserSelection(int maxOption) {
@@ -436,5 +732,77 @@ public class BankCli {
             System.out.println("Invalid amount.");
             return null;
         }
+=======
+    private void runListCustomers(String[] args) {
+        if (args.length != 3) {
+            System.out.println("Invalid arguments for list-customers.");
+            printUsage();
+            return;
+        }
+
+        try {
+            List<Customer> customers = accountService.listCustomers(args[1], args[2]);
+            if (customers.isEmpty()) {
+                System.out.println("No customers found.");
+                return;
+            }
+            System.out.println("All customers:");
+            for (Customer customer : customers) {
+                System.out.println(
+                        "  " + customer.getId()
+                                + " | " + customer.getName()
+                                + " | accounts: " + customer.getAccountIds().size()
+                );
+            }
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    private void printUsage() {
+        System.out.println("Bank CLI (SQLite: " + dbPath.toAbsolutePath().normalize() + ")");
+        System.out.println("Override path: -Dbank.db.file=/path/to/bank.db");
+        System.out.println("Seeded customer for demo: CUST-001");
+        System.out.println(
+                "Seeded admin for demo: "
+                        + SqliteBankStore.SEEDED_ADMIN_USERNAME
+                        + " / "
+                        + SqliteBankStore.SEEDED_ADMIN_PASSWORD
+        );
+        System.out.println("Usage:");
+        System.out.println("  create-account <customerId> <password> <CHECKING|SAVINGS> <openingDeposit>");
+        System.out.println("  transaction-history <accountId>");
+        System.out.println("  deposit <accountId> <amount>");
+        System.out.println("  withdraw <accountId> <password> <amount>");
+        System.out.println("  close-account <accountId> <password>");
+        System.out.println("  transfer <fromAccountId> <toAccountId> <amount> <password>");
+        System.out.println("  total-balance <customerId>");
+        System.out.println("  collect-fee <adminUsername> <adminPassword> <accountId> <amount>");
+        System.out.println("  add-interest <adminUsername> <adminPassword> <accountId> <amount>");
+        System.out.println("  freeze-account <adminUsername> <adminPassword> <accountId>");
+        System.out.println("  unfreeze-account <adminUsername> <adminPassword> <accountId>");
+        System.out.println("  list-customers <adminUsername> <adminPassword>");
+        System.out.println("  list-accounts <customerId>");
+        System.out.println("  check-balance <accountId>");
+        System.out.println("  clear-data");
+        System.out.println("  set-interest-rate <adminUsername> <adminPassword> <accountId> <rate>");
+        System.out.println("  view-interest-rate <accountId>");
+        System.out.println("Examples:");
+        System.out.println("  create-account CUST-001 password123 CHECKING 100.00");
+        System.out.println("  check-balance ACC-0001");
+        System.out.println("  total-balance CUST-001");
+        System.out.println("  deposit ACC-0001 50.00");
+        System.out.println("  withdraw ACC-0001 password123 25.00");
+        System.out.println("  transaction-history ACC-0001");
+        System.out.println("  transfer ACC-0001 ACC-0002 10.00 password123");
+        System.out.println("  collect-fee admin admin123 ACC-0001 5.00");
+        System.out.println("  add-interest admin admin123 ACC-0001 3.00");
+        System.out.println("  set-interest-rate admin admin123 ACC-0001 0.05");
+        System.out.println("  view-interest-rate ACC-0001");
+        System.out.println("  list-customers <adminUsername> <adminPassword>");
+        System.out.println("  list-accounts <customerId>");
+        System.out.println("  freeze-account admin admin123 ACC-0001");
+        System.out.println("  unfreeze-account admin admin123 ACC-0001");
+>>>>>>> main
     }
 }
