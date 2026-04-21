@@ -34,9 +34,6 @@ public class AccountService {
 
         Customer customer = bank.findCustomer(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException(customerId));
-        if (!customer.getPassword().equals(password)) {
-            throw new AuthenticationException("Invalid customer credentials.");
-        }
 
         String accountId = bank.nextAccountId();
         Account account = new Account(accountId, customer.getId(), accountType, openingDeposit);
@@ -69,8 +66,7 @@ public class AccountService {
         return updatedAccount;
     }
 
-    public Account withdraw(String accountId, BigDecimal amount, String password) {
-        authenticateCustomer(accountId, password);
+    public Account withdraw(String accountId, BigDecimal amount) {
 
         Account account = requireAccount(accountId);
         ensureAccountIsNotFrozen(account, "withdraw from");
@@ -110,8 +106,7 @@ public class AccountService {
         return history;
     }
 
-    public BigDecimal closeAccount(String accountId, String password) {
-        authenticateCustomer(accountId, password);
+    public BigDecimal closeAccount(String accountId) {
 
         Account account = requireAccount(accountId);
         BigDecimal closingBalance = account.getBalance();
@@ -128,8 +123,7 @@ public class AccountService {
         return closingBalance;
     }
 
-    public void transfer(String fromAccountId, String toAccountId, BigDecimal amount, String password) {
-        authenticateCustomer(fromAccountId, password);
+    public void transfer(String fromAccountId, String toAccountId, BigDecimal amount) {
         
         if (Objects.equals(fromAccountId, toAccountId)) {
             throw new InvalidTransferException("Cannot transfer to the same account.");
