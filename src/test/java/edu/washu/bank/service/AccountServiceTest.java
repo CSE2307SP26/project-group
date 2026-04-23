@@ -268,10 +268,43 @@ class AccountServiceTest {
     }
 
     @Test
+    void getTransactionHistoryByTypeReturnsOnlyMatchingTransactions() {
+        Account account = createCheckingAccount("100.00");
+
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("25.00"));
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("5.00"));
+        accountService.withdraw(account.getId(), new BigDecimal("10.00"), CUSTOMER_PASSWORD);
+
+        List<Transaction> history = accountService.getTransactionHistory(account.getId(), TransactionType.DEPOSIT);
+
+        assertEquals(2, history.size());
+        assertTrue(history.stream().allMatch(transaction -> transaction.getType() == TransactionType.DEPOSIT));
+    }
+
+    @Test
+    void getTransactionHistoryByTypeReturnsEmptyListWhenAccountHasNoMatches() {
+        Account account = createCheckingAccount("100.00");
+
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("25.00"));
+
+        List<Transaction> history = accountService.getTransactionHistory(account.getId(), TransactionType.FEE);
+
+        assertTrue(history.isEmpty());
+    }
+
+    @Test
     void getTransactionHistoryForMissingAccountThrows() {
         assertThrows(
                 AccountNotFoundException.class,
                 () -> accountService.getTransactionHistory("ACC-404")
+        );
+    }
+
+    @Test
+    void getTransactionHistoryByTypeForMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.getTransactionHistory("ACC-404", TransactionType.DEPOSIT)
         );
     }
 
@@ -501,6 +534,42 @@ class AccountServiceTest {
                 AuthenticationException.class,
                 () -> accountService.listCustomers("admin", "wrongpassword")
         );
+    }
+
+    @Test
+    void listFrozenAccountsWithValidAdminReturnsOnlyFrozenAccounts() {
+        Account frozenChecking = createCheckingAccount("100.00");
+        Account activeSavings = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("50.00"),
+                CUSTOMER_PASSWORD
+        );
+        accountService.freezeAccount("admin", "admin123", frozenChecking.getId());
+
+        List<Account> frozenAccounts = accountService.listFrozenAccounts("admin", "admin123");
+
+        assertEquals(1, frozenAccounts.size());
+        assertEquals(frozenChecking.getId(), frozenAccounts.get(0).getId());
+        assertTrue(frozenAccounts.stream().allMatch(Account::isFrozen));
+        assertFalse(frozenAccounts.stream().anyMatch(account -> account.getId().equals(activeSavings.getId())));
+    }
+
+    @Test
+    void listFrozenAccountsWithInvalidAdminThrows() {
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.listFrozenAccounts("admin", "wrongpassword")
+        );
+    }
+
+    @Test
+    void listFrozenAccountsReturnsEmptyWhenNoAccountsAreFrozen() {
+        createCheckingAccount("100.00");
+
+        List<Account> frozenAccounts = accountService.listFrozenAccounts("admin", "admin123");
+
+        assertTrue(frozenAccounts.isEmpty());
     }
 
     @Test
