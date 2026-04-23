@@ -135,9 +135,10 @@ public class BankCli {
             System.out.println("5. Transfer");
             System.out.println("6. Transaction History");
             System.out.println("7. Close Account");
+            System.out.println("8. Set Balance Alert Threshold");
             System.out.println("0. Logout");
 
-            int selection = getUserSelection(7);
+            int selection = getUserSelection(8);
             switch (selection) {
                 case 1: viewAccounts(customer); break;
                 case 2: openNewAccount(customer); break;
@@ -146,6 +147,7 @@ public class BankCli {
                 case 5: transfer(customer); break;
                 case 6: transactionHistory(customer); break;
                 case 7: closeAccount(customer); break;
+                case 8: setBalanceAlert(customer); break;
                 case 0:
                     System.out.println("Logged out.");
                     return;
@@ -321,6 +323,30 @@ public class BankCli {
         }
     }
 
+    private void setBalanceAlert(Customer customer) {
+        String accountId = promptAccountId(customer);
+        if (accountId == null) return;
+
+        Account account = bank.findAccount(accountId).orElse(null);
+        if (account == null) return;
+
+        System.out.println("Current alert threshold: " + account.getAlertBalanceThreshold());
+        System.out.print("Enter new alert threshold amount: ");
+        BigDecimal newThreshold = readAmount();
+        if (newThreshold == null) return;
+
+        try {
+            Account updatedAccount = account.withAlertBalanceThreshold(newThreshold);
+            bank.saveAccount(updatedAccount);
+            store.saveFullState(bank);
+            System.out.println("Alert threshold for " + accountId + " updated to " + newThreshold + ".");
+        } catch (RuntimeException ex) {
+            System.out.println("Error: " + ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     // ─── Admin Menu ───────────────────────────────────────────────────────────
 
     private void adminMenu(String username, String password) {
@@ -484,9 +510,17 @@ public class BankCli {
                             num, a.getId(), a.getType(), a.getBalance())
             );
         }
-        System.out.print("Enter account ID: ");
+        System.out.print("Enter account ID or number (e.g., 1 or ACC-0001): ");
         String input = scanner.nextLine().trim();
         if (input.isEmpty()) return null;
+
+        try {
+            int index = Integer.parseInt(input) - 1;
+            if (index >= 0 && index < accountIds.size()) {
+                return accountIds.get(index);
+            }
+        } catch (NumberFormatException ignored) {}
+
         if (!customer.getAccountIds().contains(input)) {
             System.out.println("Account not found or does not belong to you.");
             return null;

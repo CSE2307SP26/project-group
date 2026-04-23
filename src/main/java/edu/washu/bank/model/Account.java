@@ -16,15 +16,15 @@ public class Account {
     private final boolean frozen;
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance) {
-        this(id, customerId, type, balance, BigDecimal.ZERO, false);
+        this(id, customerId, type, balance, BigDecimal.ZERO, false, new BigDecimal("50.00"));
     }
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance, BigDecimal interestRate) {
-        this(id, customerId, type, balance, interestRate, false);
+        this(id, customerId, type, balance, interestRate, false, new BigDecimal("50.00"));
     }
 
     public Account(String id, String customerId, AccountType type, BigDecimal balance, boolean frozen) {
-        this(id, customerId, type, balance, BigDecimal.ZERO, frozen);
+        this(id, customerId, type, balance, BigDecimal.ZERO, frozen, new BigDecimal("50.00"));
     }
 
     public Account(
@@ -33,15 +33,16 @@ public class Account {
             AccountType type,
             BigDecimal balance,
             BigDecimal interestRate,
-            boolean frozen
+            boolean frozen,
+            BigDecimal alertBalanceThreshold
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.customerId = Objects.requireNonNull(customerId, "customerId must not be null");
         this.type = Objects.requireNonNull(type, "type must not be null");
         this.balance = Objects.requireNonNull(balance, "balance must not be null");
-        this.alertBalanceThreshold = new BigDecimal("50.00");
         this.interestRate = Objects.requireNonNull(interestRate, "interestRate must not be null");
         this.frozen = frozen;
+        this.alertBalanceThreshold = alertBalanceThreshold != null ? alertBalanceThreshold : new BigDecimal("50.00");
 
         if (interestRate.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Interest rate must not be negative.");
@@ -66,8 +67,8 @@ public class Account {
 
     public BigDecimal getAlertBalanceThreshold() {
         return alertBalanceThreshold;
-    }  
-    
+    }
+
     public BigDecimal getInterestRate() {
         return interestRate;
     }
@@ -96,19 +97,26 @@ public class Account {
         if (newInterestRate == null || newInterestRate.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Interest rate must be 0 or greater.");
         }
-        return new Account(id, customerId, type, balance, newInterestRate, frozen);
+        return new Account(id, customerId, type, balance, newInterestRate, frozen, alertBalanceThreshold);
+    }
+
+    public Account withAlertBalanceThreshold(BigDecimal newThreshold) {
+        if (newThreshold == null || newThreshold.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Alert balance threshold must be 0 or greater.");
+        }
+        return new Account(id, customerId, type, balance, interestRate, frozen, newThreshold);
     }
 
     public Account freeze() {
-        return new Account(id, customerId, type, balance, interestRate, true);
+        return new Account(id, customerId, type, balance, interestRate, true, alertBalanceThreshold);
     }
 
     public Account unfreeze() {
-        return new Account(id, customerId, type, balance, interestRate, false);
+        return new Account(id, customerId, type, balance, interestRate, false, alertBalanceThreshold);
     }
 
     private Account applyDelta(BigDecimal amountDelta) {
-        return new Account(id, customerId, type, balance.add(amountDelta), interestRate, frozen);
+        return new Account(id, customerId, type, balance.add(amountDelta), interestRate, frozen, alertBalanceThreshold);
     }
 
     private void validateDepositAmount(BigDecimal amount) {
