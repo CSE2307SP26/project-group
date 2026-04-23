@@ -50,6 +50,16 @@ public class AccountService {
         return account;
     }
 
+    public Account createAdditionalAccount(
+            String customerId,
+            AccountType accountType,
+            BigDecimal openingDeposit,
+            String password
+    ) {
+        authenticateCustomerById(customerId, password);
+        return createAdditionalAccount(customerId, accountType, openingDeposit);
+    }
+
     public Account depositIntoExistingAccount(String accountId, BigDecimal amount) {
         Account existingAccount = requireAccount(accountId);
         ensureAccountIsNotFrozen(existingAccount, "deposit into");
@@ -81,6 +91,11 @@ public class AccountService {
                 "Withdrawal"
         );
         return updatedAccount;
+    }
+
+    public Account withdraw(String accountId, BigDecimal amount, String password) {
+        authenticateCustomerByAccountId(accountId, password);
+        return withdraw(accountId, amount);
     }
 
     public BigDecimal getBalance(String accountId) {
@@ -123,6 +138,11 @@ public class AccountService {
         return closingBalance;
     }
 
+    public BigDecimal closeAccount(String accountId, String password) {
+        authenticateCustomerByAccountId(accountId, password);
+        return closeAccount(accountId);
+    }
+
     public void transfer(String fromAccountId, String toAccountId, BigDecimal amount) {
         
         if (Objects.equals(fromAccountId, toAccountId)) {
@@ -154,6 +174,11 @@ public class AccountService {
                 fromAccountId,
                 "Transfer from " + fromAccountId
         );
+    }
+
+    public void transfer(String fromAccountId, String toAccountId, BigDecimal amount, String password) {
+        authenticateCustomerByAccountId(fromAccountId, password);
+        transfer(fromAccountId, toAccountId, amount);
     }
 
     public Account collectFee(String username, String password, String accountId, BigDecimal amount) {
@@ -234,13 +259,18 @@ public class AccountService {
         }
     }
 
-    private void authenticateCustomer(String accountId, String password) {
-        Account account = requireAccount(accountId);
-        Customer customer = bank.findCustomer(account.getCustomerId())
-                .orElseThrow(() -> new CustomerNotFoundException(account.getCustomerId()));
+    private Customer authenticateCustomerById(String customerId, String password) {
+        Customer customer = bank.findCustomer(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException(customerId));
         if (!customer.getPassword().equals(password)) {
             throw new AuthenticationException("Invalid customer credentials.");
         }
+        return customer;
+    }
+
+    private void authenticateCustomerByAccountId(String accountId, String password) {
+        Account account = requireAccount(accountId);
+        authenticateCustomerById(account.getCustomerId(), password);
     }
 
     private Account requireAccount(String accountId) {
