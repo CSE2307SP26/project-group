@@ -46,15 +46,44 @@ public class BankCli {
         System.out.println("========================================");
         System.out.println("1. Customer Login");
         System.out.println("2. Admin Login");
+        System.out.println("3. Register New Customer");
         System.out.println("0. Exit");
 
-        int selection = getUserSelection(2);
+        int selection = getUserSelection(3);
         switch (selection) {
             case 1: customerLogin(); break;
             case 2: adminLogin(); break;
+            case 3: registerCustomer(); break;
             case 0:
                 System.out.println("Goodbye!");
                 System.exit(0);
+        }
+    }
+
+    private void registerCustomer() {
+        System.out.print("Enter your Name: ");
+        String name = scanner.nextLine().trim();
+        if (name.isEmpty()) {
+            System.out.println("Name cannot be empty.");
+            return;
+        }
+
+        System.out.print("Choose a Password: ");
+        String password = scanner.nextLine().trim();
+        if (password.isEmpty()) {
+            System.out.println("Password cannot be empty.");
+            return;
+        }
+
+        String newId = bank.nextCustomerId();
+        Customer newCustomer = new Customer(newId, name, password);
+        bank.addCustomer(newCustomer);
+
+        try {
+            store.saveFullState(bank);
+            System.out.println("Registration successful! Your Customer ID is: " + newId);
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
         }
     }
 
@@ -135,8 +164,8 @@ public class BankCli {
         System.out.println("Your Accounts:");
         for (String accountId : accountIds) {
             bank.findAccount(accountId).ifPresent(a ->
-                System.out.printf("  %-10s  %-10s  Balance: %s%n",
-                        a.getId(), a.getType(), a.getBalance())
+                    System.out.printf("  %-10s  %-10s  Balance: %s%n",
+                            a.getId(), a.getType(), a.getBalance())
             );
         }
     }
@@ -451,8 +480,8 @@ public class BankCli {
             String id = accountIds.get(i);
             int num = i + 1;
             bank.findAccount(id).ifPresent(a ->
-                System.out.printf("  %d. %-10s  %-10s  Balance: %s%n",
-                        num, a.getId(), a.getType(), a.getBalance())
+                    System.out.printf("  %d. %-10s  %-10s  Balance: %s%n",
+                            num, a.getId(), a.getType(), a.getBalance())
             );
         }
         System.out.print("Enter account ID: ");

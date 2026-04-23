@@ -137,6 +137,9 @@ public final class SqliteBankStore {
             ps.setString(1, "transaction_sequence");
             ps.setString(2, "1");
             ps.executeUpdate();
+            ps.setString(1, "customer_sequence");
+            ps.setString(2, "2");
+            ps.executeUpdate();
         }
         try (PreparedStatement ps = c.prepareStatement(
                 "INSERT INTO customers (id, name, password) VALUES (?, ?, ?)")) {
@@ -155,6 +158,7 @@ public final class SqliteBankStore {
 
     private static void ensureSeedData(Connection c) throws SQLException {
         ensureMetaValue(c, "transaction_sequence", "1");
+        ensureMetaValue(c, "customer_sequence", "2");
         ensureAdminUser(c);
     }
 
@@ -254,6 +258,7 @@ public final class SqliteBankStore {
             try (ResultSet rs = ps.executeQuery()) {
                 boolean foundAccountSequence = false;
                 boolean foundTransactionSequence = false;
+                boolean foundCustomerSequence = false;
                 while (rs.next()) {
                     String key = rs.getString("key");
                     String value = rs.getString("value");
@@ -263,6 +268,9 @@ public final class SqliteBankStore {
                     } else if ("transaction_sequence".equals(key)) {
                         bank.setTransactionSequence(Integer.parseInt(value));
                         foundTransactionSequence = true;
+                    } else if ("customer_sequence".equals(key)) {
+                        bank.setCustomerSequence(Integer.parseInt(value));
+                        foundCustomerSequence = true;
                     }
                 }
                 if (!foundAccountSequence) {
@@ -270,6 +278,9 @@ public final class SqliteBankStore {
                 }
                 if (!foundTransactionSequence) {
                     bank.setTransactionSequence(1);
+                }
+                if (!foundCustomerSequence) {
+                    bank.setCustomerSequence(2);
                 }
             }
         }
@@ -349,6 +360,9 @@ public final class SqliteBankStore {
                     ps.executeUpdate();
                     ps.setString(1, "transaction_sequence");
                     ps.setString(2, Integer.toString(bank.getTransactionSequence()));
+                    ps.executeUpdate();
+                    ps.setString(1, "customer_sequence");
+                    ps.setString(2, Integer.toString(bank.getCustomerSequence()));
                     ps.executeUpdate();
                 }
                 try (PreparedStatement ps = c.prepareStatement("INSERT INTO customers (id, name, password) VALUES (?, ?, ?)")) {
