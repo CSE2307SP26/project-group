@@ -341,12 +341,6 @@ public class AccountService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
-    public List<Transaction> getRecentTransactions(String accountId, int n) {
-        List<Transaction> history = getTransactionHistory(accountId);
-        int size = history.size();
-        return history.subList(Math.max(0, size - n), size);
-    }
-
     public List<Transaction> getTransactionsSortedByAmount(String accountId) {
         List<Transaction> history = new java.util.ArrayList<>(getTransactionHistory(accountId));
         history.sort((a, b) -> b.getAmount().compareTo(a.getAmount()));
