@@ -22,7 +22,7 @@ class BankTest {
     @Test
     void addCustomerAndSaveAccountAreRetrievable() {
         Bank bank = new Bank();
-        Customer customer = new Customer("CUST-001", "Alice", "123");
+        Customer customer = new Customer("CUST-001", "Alice", "password");
         Account account = new Account("ACC-0001", "CUST-001", AccountType.CHECKING, BigDecimal.ZERO);
 
         bank.addCustomer(customer);

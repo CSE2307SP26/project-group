@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SqliteBankStoreTest {
-    private static final String SEEDED_CUSTOMER_PASSWORD = "password123";
+    private static final String SEEDED_CUSTOMER_PASSWORD = "password";
+    private static final String MIGRATED_CUSTOMER_PASSWORD = "password";
 
     @Test
     void loadOrInitializeSeedsDemoCustomer(@TempDir Path tempDir) throws SQLException {
@@ -161,7 +162,7 @@ class SqliteBankStoreTest {
 
         assertEquals(1, bank.getAccountSequence());
         assertEquals(1, bank.getTransactionSequence());
-        assertEquals(SEEDED_CUSTOMER_PASSWORD, bank.findCustomer("CUST-001").orElseThrow().getPassword());
+        assertEquals(MIGRATED_CUSTOMER_PASSWORD, bank.findCustomer("CUST-001").orElseThrow().getPassword());
         assertEquals(
                 SqliteBankStore.SEEDED_ADMIN_PASSWORD,
                 bank.findAdmin(SqliteBankStore.SEEDED_ADMIN_USERNAME).orElseThrow().getPassword()

@@ -58,7 +58,7 @@ class AccountTest {
     @Test
     void withdrawReturnsAccountWithUpdatedBalance() {
         Account updated = account(100).withdraw(new BigDecimal("30"));
-        assertEquals(new BigDecimal("70.0"), updated.getBalance());
+        assertEquals(new BigDecimal("70"), updated.getBalance());
     }
 
     // TODO: should add more test on threshold change and balance 

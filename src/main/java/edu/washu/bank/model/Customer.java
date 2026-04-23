@@ -8,8 +8,8 @@ import java.util.Objects;
 public class Customer {
     private final String id;
     private final String name;
-    private final List<String> accountIds = new ArrayList<>();
     private final String password;
+    private final List<String> accountIds = new ArrayList<>();
 
     public Customer(String id, String name, String password) {
         this.id = Objects.requireNonNull(id, "id must not be null");
@@ -21,12 +21,12 @@ public class Customer {
         return id;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
     public String getName() {
         return name;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public List<String> getAccountIds() {

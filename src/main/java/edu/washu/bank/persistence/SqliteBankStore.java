@@ -55,8 +55,14 @@ public final class SqliteBankStore {
                     "CREATE TABLE IF NOT EXISTS customers ("
                             + "id TEXT PRIMARY KEY NOT NULL,"
                             + "name TEXT NOT NULL,"
-                            + "password TEXT NOT NULL)"
+                            + "password TEXT NOT NULL DEFAULT 'password')"
             );
+            // Migrate existing databases that lack the password column
+            try {
+                st.execute("ALTER TABLE customers ADD COLUMN password TEXT NOT NULL DEFAULT 'password'");
+            } catch (SQLException ignored) {
+                // Column already exists — safe to ignore
+            }
             st.execute(
                     "CREATE TABLE IF NOT EXISTS accounts ("
                             + "id TEXT PRIMARY KEY NOT NULL,"
@@ -136,7 +142,7 @@ public final class SqliteBankStore {
                 "INSERT INTO customers (id, name, password) VALUES (?, ?, ?)")) {
             ps.setString(1, "CUST-001");
             ps.setString(2, "Demo User");
-            ps.setString(3, "password123");
+            ps.setString(3, "password");
             ps.executeUpdate();
         }
         try (PreparedStatement ps = c.prepareStatement(
