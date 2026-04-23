@@ -19,6 +19,7 @@ public class Bank {
     private final List<Transaction> transactions = new ArrayList<>();
     private int accountSequence = 1;
     private int transactionSequence = 1;
+    private int customerSequence = 2;
 
     public void addCustomer(Customer customer) {
         customers.put(customer.getId(), customer);
@@ -38,6 +39,12 @@ public class Bank {
 
     public void removeAccount(String accountId) {
         accounts.remove(accountId);
+    }
+
+    public String nextCustomerId() {
+        String newId = String.format("CUST-%03d", customerSequence);
+        customerSequence += 1;
+        return newId;
     }
 
     public String nextAccountId() {
@@ -69,6 +76,14 @@ public class Bank {
 
     public void setTransactionSequence(int transactionSequence) {
         this.transactionSequence = transactionSequence;
+    }
+
+    public int getCustomerSequence() {
+        return customerSequence;
+    }
+
+    public void setCustomerSequence(int customerSequence) {
+        this.customerSequence = customerSequence;
     }
 
     public List<Customer> getCustomersSnapshot() {
