@@ -11,7 +11,8 @@
 
 # Features planned to implement in iteration 3
 
-18. Reconstruct the user interface into a text-based user interface. (Rosie)
+17. Switch the user interface into a text-based user interface. (Rosie)
+18. Reconstruct the logic of processing user input due to change of interface (Rosie)
 19. customer can filter transaction history by transaction type. (Daniel)
 20. bank administrator can view all frozen accounts in the bank. (Daniel)
 21. A bank customer should be able to view their most recent N transactions. (Bobby)
