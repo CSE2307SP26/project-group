@@ -537,6 +537,42 @@ class AccountServiceTest {
     }
 
     @Test
+    void listFrozenAccountsWithValidAdminReturnsOnlyFrozenAccounts() {
+        Account frozenChecking = createCheckingAccount("100.00");
+        Account activeSavings = accountService.createAdditionalAccount(
+                "CUST-001",
+                AccountType.SAVINGS,
+                new BigDecimal("50.00"),
+                CUSTOMER_PASSWORD
+        );
+        accountService.freezeAccount("admin", "admin123", frozenChecking.getId());
+
+        List<Account> frozenAccounts = accountService.listFrozenAccounts("admin", "admin123");
+
+        assertEquals(1, frozenAccounts.size());
+        assertEquals(frozenChecking.getId(), frozenAccounts.get(0).getId());
+        assertTrue(frozenAccounts.stream().allMatch(Account::isFrozen));
+        assertFalse(frozenAccounts.stream().anyMatch(account -> account.getId().equals(activeSavings.getId())));
+    }
+
+    @Test
+    void listFrozenAccountsWithInvalidAdminThrows() {
+        assertThrows(
+                AuthenticationException.class,
+                () -> accountService.listFrozenAccounts("admin", "wrongpassword")
+        );
+    }
+
+    @Test
+    void listFrozenAccountsReturnsEmptyWhenNoAccountsAreFrozen() {
+        createCheckingAccount("100.00");
+
+        List<Account> frozenAccounts = accountService.listFrozenAccounts("admin", "admin123");
+
+        assertTrue(frozenAccounts.isEmpty());
+    }
+
+    @Test
     void setInterestRateForCheckingAccountThrows() {
         Account account = createCheckingAccount("100.00");
 

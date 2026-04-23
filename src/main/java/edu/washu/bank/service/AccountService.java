@@ -318,6 +318,13 @@ public class AccountService {
         return bank.getCustomersSnapshot();
     }
 
+    public List<Account> listFrozenAccounts(String username, String password) {
+        authenticateAdmin(username, password);
+        return bank.getAccountsSnapshot().stream()
+                .filter(Account::isFrozen)
+                .collect(Collectors.toList());
+    }
+
     public List<Account> listAccounts(String customerId) {
         Customer customer = bank.findCustomer(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException(customerId));
