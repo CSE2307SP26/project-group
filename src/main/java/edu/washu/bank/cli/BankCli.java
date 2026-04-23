@@ -1,14 +1,13 @@
 package edu.washu.bank.cli;
 
 import edu.washu.bank.core.Bank;
-import edu.washu.bank.exception.AuthenticationException;
 import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
 import edu.washu.bank.model.Customer;
 import edu.washu.bank.model.Transaction;
+import edu.washu.bank.model.TransactionType;
 import edu.washu.bank.persistence.SqliteBankStore;
 import edu.washu.bank.service.AccountService;
-import edu.washu.bank.model.Customer;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -46,15 +45,44 @@ public class BankCli {
         System.out.println("========================================");
         System.out.println("1. Customer Login");
         System.out.println("2. Admin Login");
+        System.out.println("3. Register New Customer");
         System.out.println("0. Exit");
 
-        int selection = getUserSelection(2);
+        int selection = getUserSelection(3);
         switch (selection) {
             case 1: customerLogin(); break;
             case 2: adminLogin(); break;
+            case 3: registerCustomer(); break;
             case 0:
                 System.out.println("Goodbye!");
                 System.exit(0);
+        }
+    }
+
+    private void registerCustomer() {
+        System.out.print("Enter your Name: ");
+        String name = scanner.nextLine().trim();
+        if (name.isEmpty()) {
+            System.out.println("Name cannot be empty.");
+            return;
+        }
+
+        System.out.print("Choose a Password: ");
+        String password = scanner.nextLine().trim();
+        if (password.isEmpty()) {
+            System.out.println("Password cannot be empty.");
+            return;
+        }
+
+        String newId = bank.nextCustomerId();
+        Customer newCustomer = new Customer(newId, name, password);
+        bank.addCustomer(newCustomer);
+
+        try {
+            store.saveFullState(bank);
+            System.out.println("Registration successful! Your Customer ID is: " + newId);
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
         }
     }
 
@@ -108,9 +136,10 @@ public class BankCli {
             System.out.println("7. Close Account");
             System.out.println("8. View Recent Transactions");
             System.out.println("9. Sort Transactions by Amount");
+            System.out.println("10. Set Balance Alert Threshold");
             System.out.println("0. Logout");
-            int selection = getUserSelection(9);
 
+            int selection = getUserSelection(10);
             switch (selection) {
                 case 1: viewAccounts(customer); break;
                 case 2: openNewAccount(customer); break;
@@ -121,6 +150,7 @@ public class BankCli {
                 case 7: closeAccount(customer); break;
                 case 8: viewRecentTransactions(customer); break;
                 case 9: sortTransactionsByAmount(customer); break;
+                case 10: setBalanceAlert(customer); break;
                 case 0:
                     System.out.println("Logged out.");
                     return;
@@ -139,8 +169,8 @@ public class BankCli {
         System.out.println("Your Accounts:");
         for (String accountId : accountIds) {
             bank.findAccount(accountId).ifPresent(a ->
-                System.out.printf("  %-10s  %-10s  Balance: %s%n",
-                        a.getId(), a.getType(), a.getBalance())
+                    System.out.printf("  %-10s  %-10s  Balance: %s%n",
+                            a.getId(), a.getType(), a.getBalance())
             );
         }
     }
@@ -238,7 +268,10 @@ public class BankCli {
         if (accountId == null) return;
 
         try {
-            List<Transaction> history = accountService.getTransactionHistory(accountId);
+            TransactionType filterType = promptTransactionTypeFilter();
+            List<Transaction> history = filterType == null
+                    ? accountService.getTransactionHistory(accountId)
+                    : accountService.getTransactionHistory(accountId, filterType);
             if (history.isEmpty()) {
                 System.out.println("No transactions found.");
                 return;
@@ -255,6 +288,21 @@ public class BankCli {
         } catch (RuntimeException ex) {
             System.out.println("Error: " + ex.getMessage());
         }
+    }
+
+    private TransactionType promptTransactionTypeFilter() {
+        TransactionType[] transactionTypes = TransactionType.values();
+        System.out.println("Filter by transaction type:");
+        System.out.println("0. All transaction types");
+        for (int i = 0; i < transactionTypes.length; i++) {
+            System.out.println((i + 1) + ". " + transactionTypes[i]);
+        }
+
+        int selection = getUserSelection(transactionTypes.length);
+        if (selection == 0) {
+            return null;
+        }
+        return transactionTypes[selection - 1];
     }
 
     private void closeAccount(Customer customer) {
@@ -332,6 +380,30 @@ public class BankCli {
         }
     }
 
+    private void setBalanceAlert(Customer customer) {
+        String accountId = promptAccountId(customer);
+        if (accountId == null) return;
+
+        Account account = bank.findAccount(accountId).orElse(null);
+        if (account == null) return;
+
+        System.out.println("Current alert threshold: " + account.getAlertBalanceThreshold());
+        System.out.print("Enter new alert threshold amount: ");
+        BigDecimal newThreshold = readAmount();
+        if (newThreshold == null) return;
+
+        try {
+            Account updatedAccount = account.withAlertBalanceThreshold(newThreshold);
+            bank.saveAccount(updatedAccount);
+            store.saveFullState(bank);
+            System.out.println("Alert threshold for " + accountId + " updated to " + newThreshold + ".");
+        } catch (RuntimeException ex) {
+            System.out.println("Error: " + ex.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
     // ─── Admin Menu ───────────────────────────────────────────────────────────
 
     private void adminMenu(String username, String password) {
@@ -340,18 +412,20 @@ public class BankCli {
             System.out.println("--- Admin Menu ---");
             System.out.println("1. View All Customers");
             System.out.println("2. View All Accounts");
-            System.out.println("3. Collect Fee from Account");
-            System.out.println("4. Add Interest to Account");
-            System.out.println("5. Reset / Clear All Data");
+            System.out.println("3. View Frozen Accounts");
+            System.out.println("4. Collect Fee from Account");
+            System.out.println("5. Add Interest to Account");
+            System.out.println("6. Reset / Clear All Data");
             System.out.println("0. Logout");
 
-            int selection = getUserSelection(5);
+            int selection = getUserSelection(6);
             switch (selection) {
                 case 1: viewAllCustomers(); break;
                 case 2: viewAllAccounts(); break;
-                case 3: adminCollectFee(username, password); break;
-                case 4: adminAddInterest(username, password); break;
-                case 5: adminClearData(); break;
+                case 3: viewFrozenAccounts(username, password); break;
+                case 4: adminCollectFee(username, password); break;
+                case 5: adminAddInterest(username, password); break;
+                case 6: adminClearData(); break;
                 case 0:
                     System.out.println("Logged out.");
                     return;
@@ -384,6 +458,25 @@ public class BankCli {
         for (Account a : accounts) {
             System.out.printf("  %-10s  customer: %-10s  %-10s  balance: %s%n",
                     a.getId(), a.getCustomerId(), a.getType(), a.getBalance());
+        }
+    }
+
+    private void viewFrozenAccounts(String username, String password) {
+        try {
+            List<Account> accounts = accountService.listFrozenAccounts(username, password);
+            if (accounts.isEmpty()) {
+                System.out.println("No frozen accounts found.");
+                return;
+            }
+
+            System.out.println();
+            System.out.println("Frozen Accounts:");
+            for (Account a : accounts) {
+                System.out.printf("  %-10s  customer: %-10s  %-10s  balance: %s%n",
+                        a.getId(), a.getCustomerId(), a.getType(), a.getBalance());
+            }
+        } catch (RuntimeException ex) {
+            System.out.println("Error: " + ex.getMessage());
         }
     }
 
@@ -470,13 +563,21 @@ public class BankCli {
             String id = accountIds.get(i);
             int num = i + 1;
             bank.findAccount(id).ifPresent(a ->
-                System.out.printf("  %d. %-10s  %-10s  Balance: %s%n",
-                        num, a.getId(), a.getType(), a.getBalance())
+                    System.out.printf("  %d. %-10s  %-10s  Balance: %s%n",
+                            num, a.getId(), a.getType(), a.getBalance())
             );
         }
-        System.out.print("Enter account ID: ");
+        System.out.print("Enter account ID or number (e.g., 1 or ACC-0001): ");
         String input = scanner.nextLine().trim();
         if (input.isEmpty()) return null;
+
+        try {
+            int index = Integer.parseInt(input) - 1;
+            if (index >= 0 && index < accountIds.size()) {
+                return accountIds.get(index);
+            }
+        } catch (NumberFormatException ignored) {}
+
         if (!customer.getAccountIds().contains(input)) {
             System.out.println("Account not found or does not belong to you.");
             return null;
