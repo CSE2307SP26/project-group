@@ -11,7 +11,8 @@
 
 # Features planned to implement in iteration 3
 
-1. Reconstruct the user interface into a text-based user interface.
+1. Reconstruct the user interface into a text-based user interface. 
+22. A bank customer should be able to sort their transaction history by amount. (Bobby)
 
 ---
 
@@ -80,6 +81,7 @@ Password: admin123
 * User story **#14**: customer accounts support password-protected operations
 * User story **#15**: customer can view the interest rate for a savings account
 * User story **#16**: bank administrator can manage the interest rate for a savings account
+* User story **#22**: a bank customer should be able to sort their transaction history by amount
 
 ## Command-line commands
 

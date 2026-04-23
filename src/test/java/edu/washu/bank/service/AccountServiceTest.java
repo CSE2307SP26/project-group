@@ -617,6 +617,19 @@ class AccountServiceTest {
         assertEquals(new BigDecimal("115.00"), updatedAccount.getBalance());
     }
 
+    @Test
+    void getTransactionsSortedByAmountReturnsSortedDescending() {
+        Account account = createCheckingAccount("200.00");
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("50.00"));
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("10.00"));
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("30.00"));
+
+        List<Transaction> sorted = accountService.getTransactionsSortedByAmount(account.getId());
+
+        assertTrue(sorted.get(0).getAmount().compareTo(sorted.get(1).getAmount()) >= 0);
+        assertTrue(sorted.get(1).getAmount().compareTo(sorted.get(2).getAmount()) >= 0);
+    }
+
     private Account createCheckingAccount(String openingBalance) {
         return accountService.createAdditionalAccount(
                 "CUST-001",
