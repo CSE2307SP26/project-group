@@ -300,18 +300,20 @@ public class BankCli {
             System.out.println("--- Admin Menu ---");
             System.out.println("1. View All Customers");
             System.out.println("2. View All Accounts");
-            System.out.println("3. Collect Fee from Account");
-            System.out.println("4. Add Interest to Account");
-            System.out.println("5. Reset / Clear All Data");
+            System.out.println("3. View Frozen Accounts");
+            System.out.println("4. Collect Fee from Account");
+            System.out.println("5. Add Interest to Account");
+            System.out.println("6. Reset / Clear All Data");
             System.out.println("0. Logout");
 
-            int selection = getUserSelection(5);
+            int selection = getUserSelection(6);
             switch (selection) {
                 case 1: viewAllCustomers(); break;
                 case 2: viewAllAccounts(); break;
-                case 3: adminCollectFee(username, password); break;
-                case 4: adminAddInterest(username, password); break;
-                case 5: adminClearData(); break;
+                case 3: viewFrozenAccounts(username, password); break;
+                case 4: adminCollectFee(username, password); break;
+                case 5: adminAddInterest(username, password); break;
+                case 6: adminClearData(); break;
                 case 0:
                     System.out.println("Logged out.");
                     return;
@@ -344,6 +346,25 @@ public class BankCli {
         for (Account a : accounts) {
             System.out.printf("  %-10s  customer: %-10s  %-10s  balance: %s%n",
                     a.getId(), a.getCustomerId(), a.getType(), a.getBalance());
+        }
+    }
+
+    private void viewFrozenAccounts(String username, String password) {
+        try {
+            List<Account> accounts = accountService.listFrozenAccounts(username, password);
+            if (accounts.isEmpty()) {
+                System.out.println("No frozen accounts found.");
+                return;
+            }
+
+            System.out.println();
+            System.out.println("Frozen Accounts:");
+            for (Account a : accounts) {
+                System.out.printf("  %-10s  customer: %-10s  %-10s  balance: %s%n",
+                        a.getId(), a.getCustomerId(), a.getType(), a.getBalance());
+            }
+        } catch (RuntimeException ex) {
+            System.out.println("Error: " + ex.getMessage());
         }
     }
 
