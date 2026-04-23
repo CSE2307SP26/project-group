@@ -11,11 +11,13 @@
 
 # Features planned to implement in iteration 3
 
-18. Reconstruct the user interface into a text-based user interface.
-19. customer can filter transaction history by transaction type
-20. bank administrator can view all frozen accounts in the bank
+18. Reconstruct the user interface into a text-based user interface. (Rosie)
+19. customer can filter transaction history by transaction type. (Daniel)
+20. bank administrator can view all frozen accounts in the bank. (Daniel)
 21. A bank customer should be able to view their most recent N transactions. (Bobby)
 22. A bank customer should be able to sort their transaction history by amount. (Bobby)
+23. Set Balance Alerts by Customers. (Nina)
+24. Bank should be able to accept new customers. (Nina)
 
 ---
 
@@ -84,11 +86,13 @@ Password: admin123
 * User story **#14**: customer accounts support password-protected operations
 * User story **#15**: customer can view the interest rate for a savings account
 * User story **#16**: bank administrator can manage the interest rate for a savings account
-* User story **#18**: Reconstruct the user interface into a text-based user interface.
+* User story **#18**: Reconstruct the user interface into a text-based user interface
 * User story **#19**: customer can filter transaction history by transaction type
 * User story **#20**: bank administrator can view all frozen accounts in the bank
 * User story **#21**: a bank customer should be able to view their most recent N transactions
 * User story **#22**: a bank customer should be able to sort their transaction history by amount
+* User story **#23**: Set balance alerts by customers
+* User story **#24**: Bank should be able to accept new customers
 
 ## Command-line commands
 
