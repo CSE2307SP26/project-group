@@ -6,9 +6,9 @@ import edu.washu.bank.model.Account;
 import edu.washu.bank.model.AccountType;
 import edu.washu.bank.model.Customer;
 import edu.washu.bank.model.Transaction;
+import edu.washu.bank.model.TransactionType;
 import edu.washu.bank.persistence.SqliteBankStore;
 import edu.washu.bank.service.AccountService;
-import edu.washu.bank.model.Customer;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -234,7 +234,10 @@ public class BankCli {
         if (accountId == null) return;
 
         try {
-            List<Transaction> history = accountService.getTransactionHistory(accountId);
+            TransactionType filterType = promptTransactionTypeFilter();
+            List<Transaction> history = filterType == null
+                    ? accountService.getTransactionHistory(accountId)
+                    : accountService.getTransactionHistory(accountId, filterType);
             if (history.isEmpty()) {
                 System.out.println("No transactions found.");
                 return;
@@ -251,6 +254,21 @@ public class BankCli {
         } catch (RuntimeException ex) {
             System.out.println("Error: " + ex.getMessage());
         }
+    }
+
+    private TransactionType promptTransactionTypeFilter() {
+        TransactionType[] transactionTypes = TransactionType.values();
+        System.out.println("Filter by transaction type:");
+        System.out.println("0. All transaction types");
+        for (int i = 0; i < transactionTypes.length; i++) {
+            System.out.println((i + 1) + ". " + transactionTypes[i]);
+        }
+
+        int selection = getUserSelection(transactionTypes.length);
+        if (selection == 0) {
+            return null;
+        }
+        return transactionTypes[selection - 1];
     }
 
     private void closeAccount(Customer customer) {
