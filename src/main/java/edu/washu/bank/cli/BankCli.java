@@ -106,9 +106,10 @@ public class BankCli {
             System.out.println("5. Transfer");
             System.out.println("6. Transaction History");
             System.out.println("7. Close Account");
+            System.out.println("8. View Recent Transactions");
             System.out.println("0. Logout");
 
-            int selection = getUserSelection(7);
+            int selection = getUserSelection(8);
             switch (selection) {
                 case 1: viewAccounts(customer); break;
                 case 2: openNewAccount(customer); break;
@@ -117,6 +118,7 @@ public class BankCli {
                 case 5: transfer(customer); break;
                 case 6: transactionHistory(customer); break;
                 case 7: closeAccount(customer); break;
+                case 8: viewRecentTransactions(customer); break;
                 case 0:
                     System.out.println("Logged out.");
                     return;
@@ -271,6 +273,40 @@ public class BankCli {
             System.out.println("Error: " + ex.getMessage());
         } catch (SQLException ex) {
             System.err.println("Database error: " + ex.getMessage());
+        }
+    }
+
+    private void viewRecentTransactions(Customer customer) {
+        String accountId = promptAccountId(customer);
+        if (accountId == null) return;
+
+        System.out.print("How many recent transactions to view? ");
+        String line = scanner.nextLine().trim();
+        int n;
+        try {
+            n = Integer.parseInt(line);
+            if (n <= 0) {
+                System.out.println("Please enter a positive number.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number.");
+            return;
+        }
+
+        try {
+            List<Transaction> recent = accountService.getRecentTransactions(accountId, n);
+            if (recent.isEmpty()) {
+                System.out.println("No transactions found.");
+                return;
+            }
+            System.out.println("Most recent " + n + " transactions for " + accountId + ":");
+            for (Transaction t : recent) {
+                System.out.printf("  %-12s  %-16s  amount: %-10s  balance after: %s%n",
+                        t.getId(), t.getType(), t.getAmount(), t.getBalanceAfter());
+            }
+        } catch (RuntimeException ex) {
+            System.out.println("Error: " + ex.getMessage());
         }
     }
 

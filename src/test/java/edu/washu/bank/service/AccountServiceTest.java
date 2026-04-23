@@ -617,6 +617,30 @@ class AccountServiceTest {
         assertEquals(new BigDecimal("115.00"), updatedAccount.getBalance());
     }
 
+    @Test
+    void getRecentTransactionsReturnsLastNTransactions() {
+        Account account = createCheckingAccount("100.00");
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("10.00"));
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("20.00"));
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("30.00"));
+
+        List<Transaction> recent = accountService.getRecentTransactions(account.getId(), 2);
+
+        assertEquals(2, recent.size());
+        assertEquals(new BigDecimal("20.00"), recent.get(0).getAmount());
+        assertEquals(new BigDecimal("30.00"), recent.get(1).getAmount());
+    }
+
+    @Test
+    void getRecentTransactionsWhenNExceedsTotalReturnsAll() {
+        Account account = createCheckingAccount("100.00");
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("10.00"));
+
+        List<Transaction> recent = accountService.getRecentTransactions(account.getId(), 10);
+
+        assertEquals(2, recent.size());
+    }
+
     private Account createCheckingAccount(String openingBalance) {
         return accountService.createAdditionalAccount(
                 "CUST-001",

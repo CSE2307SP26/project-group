@@ -305,6 +305,12 @@ public class AccountService {
         ));
     }
 
+    public List<Transaction> getRecentTransactions(String accountId, int n) {
+        List<Transaction> history = getTransactionHistory(accountId);
+        int size = history.size();
+        return history.subList(Math.max(0, size - n), size);
+    }
+
     public List<Customer> listCustomers(String username, String password) {
         authenticateAdmin(username, password);
         return bank.getCustomersSnapshot();

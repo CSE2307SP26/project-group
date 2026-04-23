@@ -11,7 +11,8 @@
 
 # Features planned to implement in iteration 3
 
-1. Reconstruct the user interface into a text-based user interface.
+1. Reconstruct the user interface into a text-based user interface. 
+21. A bank customer should be able to view their most recent N transactions. (Bobby)
 
 ---
 
@@ -80,7 +81,7 @@ Password: admin123
 * User story **#14**: customer accounts support password-protected operations
 * User story **#15**: customer can view the interest rate for a savings account
 * User story **#16**: bank administrator can manage the interest rate for a savings account
-
+* User story **#21**: a bank customer should be able to view their most recent N transactions
 ## Command-line commands
 
 * `create-account`
@@ -100,6 +101,7 @@ Password: admin123
 * `view-interest-rate`
 * `set-interest-rate`
 * `clear-data`
+* `recent-transactions`
 
 ## Password-protected commands
 
