@@ -268,10 +268,43 @@ class AccountServiceTest {
     }
 
     @Test
+    void getTransactionHistoryByTypeReturnsOnlyMatchingTransactions() {
+        Account account = createCheckingAccount("100.00");
+
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("25.00"));
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("5.00"));
+        accountService.withdraw(account.getId(), new BigDecimal("10.00"), CUSTOMER_PASSWORD);
+
+        List<Transaction> history = accountService.getTransactionHistory(account.getId(), TransactionType.DEPOSIT);
+
+        assertEquals(2, history.size());
+        assertTrue(history.stream().allMatch(transaction -> transaction.getType() == TransactionType.DEPOSIT));
+    }
+
+    @Test
+    void getTransactionHistoryByTypeReturnsEmptyListWhenAccountHasNoMatches() {
+        Account account = createCheckingAccount("100.00");
+
+        accountService.depositIntoExistingAccount(account.getId(), new BigDecimal("25.00"));
+
+        List<Transaction> history = accountService.getTransactionHistory(account.getId(), TransactionType.FEE);
+
+        assertTrue(history.isEmpty());
+    }
+
+    @Test
     void getTransactionHistoryForMissingAccountThrows() {
         assertThrows(
                 AccountNotFoundException.class,
                 () -> accountService.getTransactionHistory("ACC-404")
+        );
+    }
+
+    @Test
+    void getTransactionHistoryByTypeForMissingAccountThrows() {
+        assertThrows(
+                AccountNotFoundException.class,
+                () -> accountService.getTransactionHistory("ACC-404", TransactionType.DEPOSIT)
         );
     }
 

@@ -17,6 +17,7 @@ import edu.washu.bank.model.TransactionType;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class AccountService {
     private final Bank bank;
@@ -119,6 +120,13 @@ public class AccountService {
             throw new AccountNotFoundException(accountId);
         }
         return history;
+    }
+
+    public List<Transaction> getTransactionHistory(String accountId, TransactionType type) {
+        Objects.requireNonNull(type, "type must not be null");
+        return getTransactionHistory(accountId).stream()
+                .filter(transaction -> transaction.getType() == type)
+                .collect(Collectors.toList());
     }
 
     public BigDecimal closeAccount(String accountId) {
