@@ -14,7 +14,8 @@
 18. Reconstruct the user interface into a text-based user interface.
 19. customer can filter transaction history by transaction type
 20. bank administrator can view all frozen accounts in the bank
-21. 21. A bank customer should be able to view their most recent N transactions. (Bobby)
+21. A bank customer should be able to view their most recent N transactions. (Bobby)
+22. A bank customer should be able to sort their transaction history by amount. (Bobby)
 
 ---
 
@@ -87,6 +88,7 @@ Password: admin123
 * User story **#19**: customer can filter transaction history by transaction type
 * User story **#20**: bank administrator can view all frozen accounts in the bank
 * User story **#21**: a bank customer should be able to view their most recent N transactions
+* User story **#22**: a bank customer should be able to sort their transaction history by amount
 
 ## Command-line commands
 
